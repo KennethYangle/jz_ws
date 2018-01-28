@@ -5,6 +5,11 @@
 # 获取飞机ID，设置总飞机数
 MAVID=`expr ${HOSTNAME:4:2} + 0`
 MAVNUM=1
+# RflySim仿真参数
+UE4IP="192.168.3.1"
+MAVX="0"
+MAVY="0"
+MAVZ="0"
 
 echo "this MAV id :${MAVID}"
 
@@ -21,6 +26,11 @@ sleep 5s
 # DDS
 roslaunch bs_assis bs_dds.launch  mav_id:=${MAVID} mav_num:=${MAVNUM} & PID3=$!
 sleep 5s
+
+# RflySim显示管道和创建物体接口
+roslaunch visiualization single_rfly_obj_adder.launch mav_id:=${MAVID} ue4_ip:=${UE4IP} & PID4=$!
+roslaunch attack target_uav.launch mav_id:=${MAVID} mav_x:=${MAVX} mav_y:=${MAVY} mav_z:=${MAVZ} & PID5=$!
+sleep 2s
 
 # # 可视化
 # roslaunch visiualization visual.launch  & PID4=$!
