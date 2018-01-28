@@ -3,7 +3,9 @@
 
 import time
 import numpy as np
-import rospy
+import os
+import json
+import rospy, rospkg
 from geometry_msgs.msg import TwistStamped
 from swarm_msgs.msg import Action
 from mavros_msgs.msg import State, PositionTarget
@@ -13,7 +15,7 @@ from geometry_msgs.msg import PoseStamped, TwistStamped
 
 # 无人机控制类
 class Px4Controller:
-    def __init__(self, drone_id):
+    def __init__(self, drone_id, scene="32s"):
         self.arm_state = False
         self.offboard_state = False
         self.state = None
@@ -22,6 +24,7 @@ class Px4Controller:
         self.start_point.pose.position.z = 4
         self.drone_id = drone_id
         self.drone_name = "drone_{}".format(self.drone_id)
+        self.scene = scene
         self.rate = rospy.Rate(20)
 
         self.is_initialize_pos = False
@@ -47,38 +50,45 @@ class Px4Controller:
             self.offboard_state = self.offboard()
             self.rate.sleep()
 
-        self.takeoff(h=1.8)
+        # 不同场景做不同的准备动作
+        if self.scene == "32s":             # 主要
+            self.takeoff(h=1.8)
 
-        # # test for freeflight.py
-        # if self.drone_id == 1:
-        #     self.start_point.pose.position.x = 0
-        #     self.start_point.pose.position.y = 0
-        #     self.start_point.pose.position.z = 2
-        # elif self.drone_id == 2:
-        #     self.start_point.pose.position.x = 4
-        #     self.start_point.pose.position.y = 0
-        #     self.start_point.pose.position.z = 2
-        # elif self.drone_id == 3:
-        #     self.start_point.pose.position.x = 0
-        #     self.start_point.pose.position.y = 4
-        #     self.start_point.pose.position.z = 2
-        # # 32s
-        # self.start_point.pose.position.x = 1
-        # self.start_point.pose.position.y = -12
-        # self.start_point.pose.position.z = 2.5
-        # for _ in range(300):
-        #     self.pos_pub.publish(self.start_point)
-        #     self.rate.sleep()
-        # # test tube
-        # des_pos = np.array([46.55, 36.75, 1.0])
-        # self.start_point.pose.position.x = des_pos[0]
-        # self.start_point.pose.position.y = des_pos[1]
-        # self.start_point.pose.position.z = des_pos[2]
-        # dis = np.linalg.norm(des_pos-self.mav_pos)
-        # while dis > 0.5:
-        #     self.pos_pub.publish(self.start_point)
-        #     dis = np.linalg.norm(des_pos-self.mav_pos)
-        #     self.rate.sleep()
+        if self.scene == "paper":           # 论文使用
+            self.takeoff(h=3)
+
+        if self.scene == "freeflight":      # test for freeflight.py
+            if self.drone_id == 1:
+                self.start_point.pose.position.x = 0
+                self.start_point.pose.position.y = 0
+                self.start_point.pose.position.z = 2
+            elif self.drone_id == 2:
+                self.start_point.pose.position.x = 4
+                self.start_point.pose.position.y = 0
+                self.start_point.pose.position.z = 2
+            elif self.drone_id == 3:
+                self.start_point.pose.position.x = 0
+                self.start_point.pose.position.y = 4
+                self.start_point.pose.position.z = 2
+
+        if self.scene == "attack_in_oldfactory":      # oldfactory场景起点（以后删）
+            self.start_point.pose.position.x = 1
+            self.start_point.pose.position.y = -12
+            self.start_point.pose.position.z = 2.5
+            for _ in range(300):
+                self.pos_pub.publish(self.start_point)
+                self.rate.sleep()
+
+        if self.scene == "freeflight":      # test for tube
+            des_pos = np.array([46.55, 36.75, 1.0])
+            self.start_point.pose.position.x = des_pos[0]
+            self.start_point.pose.position.y = des_pos[1]
+            self.start_point.pose.position.z = des_pos[2]
+            dis = np.linalg.norm(des_pos-self.mav_pos)
+            while dis > 0.5:
+                self.pos_pub.publish(self.start_point)
+                dis = np.linalg.norm(des_pos-self.mav_pos)
+                self.rate.sleep()
 
     # 无人机位置姿态回调函数
     def local_pose_callback(self, msg):
@@ -139,7 +149,7 @@ class Px4Controller:
             # self.vel_pub.publish(command)
             rospy.sleep(0.05)
             # print("takeoff height:",{self.mav_pos[2]})
-            takeoff_done = (abs(self.mav_pos[2]- h) < 0.2)
+            takeoff_done = (abs(self.mav_pos[2]- h) < 0.05)
 
     def moveByPosENU(self, E=None, N=None, U=None, mav_yaw=None):
         mav_yaw = mav_yaw if mav_yaw is not None else self.mav_yaw
@@ -220,8 +230,12 @@ if __name__=="__main__":
     rospy.init_node("assemble", anonymous=True)
     param_id = rospy.get_param("~drone_id")
 
+    src_path = os.path.join(rospkg.RosPack().get_path("offboard_pkg"), "..")
+    setting_file = open(os.path.join(src_path, "settings.json"))
+    setting = json.load(setting_file)
+
     # 飞机初始化，解锁、offboard、飞到厂房前
-    px4 = Px4Controller(param_id)
+    px4 = Px4Controller(param_id, setting["SCENE"])
     px4.start()
 
     ass = Assemble(param_id)

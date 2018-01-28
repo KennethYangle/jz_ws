@@ -1,7 +1,7 @@
 {
     "Docs": "settings.md",
     "MODE": "Simulation",
-    "IsRC": false,
+    "SCENE": "paper",
     "Debug": {
         "is_show_rgb": false,
         "is_show_hsv": false

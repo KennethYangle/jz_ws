@@ -183,11 +183,23 @@ class Allocation:
             rate.sleep()
 
         # 等待到达（应由决策触发）
-        des_pos = np.array([1,-12,2.5])
+        des_pos = np.array([0,0,3])
         dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
-        while dis > 0.05:
+        while dis > 0.2:
             dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
+            print("Wait... dis={}".format(dis))
             rate.sleep()
+
+        # 1架飞机单独判断
+        if self.drone_num == 1:
+            self.dj_action.dj = True
+            self.dj_action.id = self.img_pos_dic[self.drone_name].keys()[0]
+            print("dj_action: {}".format(self.dj_action))
+
+            # publish dj_action
+            while not rospy.is_shutdown():
+                self.Expect_action_pub.publish(self.dj_action)
+                rate.sleep()
 
         # debug
         print("mav_pos_dic: {}".format(self.mav_pos_dic))
