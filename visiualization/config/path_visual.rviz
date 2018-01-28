@@ -75,7 +75,7 @@ Visualization Manager:
       Marker Topic: /visualization/generator
       Name: Generator curve
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -83,7 +83,7 @@ Visualization Manager:
       Marker Topic: /visualization/cuv
       Name: Marker
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -91,7 +91,7 @@ Visualization Manager:
       Marker Topic: /visualization/right_curve
       Name: Right curve
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -99,7 +99,7 @@ Visualization Manager:
       Marker Topic: /visualization/left_curve
       Name: left curve
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -187,25 +187,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 15.675210952758789
+      Distance: 21.35549545288086
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.0078747272491455
-        Y: 2.925140857696533
-        Z: -1.3961590411781799e-5
+        X: 6.050319671630859
+        Y: 3.0879781246185303
+        Z: -1.374838666379219e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.4497963190078735
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.1185851097106934
+      Yaw: 3.143587112426758
     Saved: ~
 Window Geometry:
   Displays:

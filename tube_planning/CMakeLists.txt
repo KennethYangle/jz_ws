@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)#cmake所需要的最低版本
 project(tube_planning)#项目名称
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+set(CMAKE_BUILD_TYPE "Release")
+add_compile_options(-std=c++11)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 find_package(Eigen3 REQUIRED)
 find_package(osqp REQUIRED)
 find_package(OsqpEigen REQUIRED)
@@ -15,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   geometry_msgs
+  # nlopt
   sensor_msgs
   swarm_msgs
 )
@@ -122,10 +124,11 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  # SYSTEM
+  SYSTEM
   include
   ${catkin_INCLUDE_DIRS}
   "/usr/include/eigen3"
+  # ${Eigen3_INCLUDE_DIRS} 
   "/usr/local/include"
   "/usr/include"
 )
@@ -149,8 +152,10 @@ add_executable(talker src/talker.cpp)#生成一个可执行文件，并且该文
 add_executable(path_sender src/path_test_send.cpp)
 add_executable(tube_plan_node 
   src/tube_planning.cpp
-  src/tube_planning_fun.cpp)
-  add_executable(gridMap src/grid_map.cpp)  
+  src/tube_planning_fun.cpp
+  src/uniform_bspline.cpp)
+add_executable(gridMap src/grid_map.cpp)  
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -176,6 +181,7 @@ osqp::osqp
 osqp::osqpstatic
 OsqpEigen::OsqpEigen 
 )
+# target_link_libraries(bspline ${catkin_LIBRARIES})
 #############
 ## Install ##
 #############

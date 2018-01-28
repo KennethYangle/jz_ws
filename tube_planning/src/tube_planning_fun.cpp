@@ -15,6 +15,7 @@
 // #include "mgl2/mgl.h"
 #include "tube_planning/gnuplot_i.hpp"
 #include "swarm_msgs/Pipeline.h"
+#include "tube_planning/uniform_bspline.h"
 
 /* program tree
 GeneratorFist::init
@@ -35,6 +36,7 @@ GeneratorFist::init
 |           |_ radiusConstraint
 |_ gridmapCallback
 */
+using ego_planner::UniformBspline;
 namespace Tube_planning
 {
     void GeneratorFist::init(ros::NodeHandle &nh)
@@ -50,7 +52,8 @@ namespace Tube_planning
         // gridmap_sub = nh.subscribe("/Map/OccupancyGrid", 10, &GeneratorFist::gridmapCallback, this);
         // path_sub = nh.subscribe("/generator_curve/paths", 10, &GeneratorFist::pathCallback, this);
         gridmap_sub = nh.subscribe("/visualization/map", 10, &GeneratorFist::gridmapCallback, this);
-        path_sub = nh.subscribe("/expect_pos"+std::to_string(uav_id), 10, &GeneratorFist::pathCallback, this);
+        // path_sub = nh.subscribe("/expect_pos0", 10, &GeneratorFist::pathCallback, this);
+        path_sub = nh.subscribe("/expect_pos"+std::to_string(uav_id), 10, &GeneratorFist::bsplineCallback, this);
         
         gen_pub = nh.advertise<nav_msgs::Path>("/tube/generator_curve", 10);
         pipeline_gen_pub = nh.advertise<swarm_msgs::Pipeline>("/pipeline/paths", 1, true);
@@ -77,6 +80,383 @@ namespace Tube_planning
             }
         }
         // std::cout << gridmap.data << std::endl << std::endl;
+    }
+    void GeneratorFist::bsplineCallback(const nav_msgs::Path::ConstPtr &msg)
+    {
+        path_length = end(msg->poses) - begin(msg->poses);
+        Path = Eigen::MatrixXd::Zero(path_length + 4,3);
+        
+        for (int i = 0; i < path_length; i++)
+        { /* Path是一个N*3的矩阵，每一列代表一个维数 */
+            Path(i + 2, 0) = msg->poses[i].pose.position.x;
+            Path(i + 2, 1) = msg->poses[i].pose.position.y;
+            // Path(i,2) = msg->poses[i].pose.position.z;
+            Path(i + 2, 2) = r_max;
+        }
+        Eigen::RowVector3d vec_1 = Path.block(2,0,1,3) - Path.block(3,0,1,3);
+        Eigen::RowVector3d insert_1 =  0 * vec_1 + Path.block(2,0,1,3);
+        Path.block(0,0,1,3) = insert_1;
+        insert_1 =  0 * vec_1 + Path.block(2,0,1,3);
+        Path.block(1,0,1,3) = insert_1;
+        path_length = path_length + 2;
+        vec_1 = Path.block(path_length - 1,0,1,3) - Path.block(path_length - 2,0,1,3);
+        insert_1 = 0 * vec_1 + Path.block(path_length - 1,0,1,3);
+        Path.block(path_length ,0,1,3) = insert_1;
+        insert_1 = 0 * vec_1 + Path.block(path_length - 1,0,1,3);
+        Path.block(path_length + 1,0,1,3) = insert_1;
+        path_length = path_length + 2;
+
+
+        
+
+        UniformBspline traj = UniformBspline(Path.block(0,0,path_length,2).transpose(), 3, 0.1);
+        Eigen::MatrixXd ff = Eigen::MatrixXd::Zero(2, traj.getKnot().rows()*10 - 71);
+        Eigen::ArrayXd tt = Eigen::ArrayXd::Zero(traj.getKnot().rows()*10 - 71);
+        double t_ = 0.01;
+        int count = 0;
+        while (t_ <= traj.getKnot()(traj.getKnot().rows()-4))
+        {
+            ff.block(0, count, 2, 1) = traj.evaluateDeBoor(t_);
+            tt(count) = t_;
+            count ++;
+            t_ = t_ + 0.01;
+        }        
+        // std::cout << ff << std::endl;
+
+        nav_msgs::Path path;
+        path.header.stamp = ros::Time::now();
+        path.header.frame_id = "map";
+        geometry_msgs::PoseStamped this_pose_stamped;
+         for (int i = 0; i < ff.cols(); i++)
+        { /* 装填路径点 */
+            this_pose_stamped.header.stamp = ros::Time::now();
+            this_pose_stamped.header.frame_id = "map";
+            this_pose_stamped.pose.position.x = ff(0,i);
+            this_pose_stamped.pose.position.y = ff(1,i);
+            this_pose_stamped.pose.position.z = 1.8;
+
+            path.poses.push_back(this_pose_stamped);
+        }
+        gen_pub.publish(path);
+
+        UniformBspline traj_d1 = traj.getDerivative();
+        Eigen::MatrixXd ff1 = Eigen::MatrixXd::Zero(2, traj_d1.getKnot().rows()*10 - 51);
+        // std::cout << "knots: " << std::endl << traj_d1.getKnot() << std::endl;
+        t_ = 0.01;
+        count = 0;
+        while (t_ <= traj_d1.getKnot()(traj_d1.getKnot().rows()-3))
+        {
+            ff1.block(0, count, 2, 1) = traj_d1.evaluateDeBoor(t_);
+            count ++;
+            t_ = t_ + 0.01;
+        } 
+
+        UniformBspline traj_d2 = traj_d1.getDerivative();
+        Eigen::MatrixXd ff2 = Eigen::MatrixXd::Zero(2, traj_d2.getKnot().rows()*10 - 31);
+        t_ = 0.01;
+        count = 0;
+        while (t_ <= traj_d2.getKnot()(traj_d2.getKnot().rows()-2))
+        {
+            ff2.block(0, count, 2, 1) = traj_d2.evaluateDeBoor(t_);
+            count ++;
+            t_ = t_ + 0.01;
+        } 
+        // std::cout << "ff num: " << ff.cols() << std::endl;
+        // std::cout << "ff1 num: " << ff1.cols() << std::endl;
+        // std::cout << "ff2 num: " << ff2.cols() << std::endl;
+        // std::cout << "ff1: " << ff1 << std::endl;
+        // std::cout << "ff2: " << ff2 << std::endl;
+
+        Eigen::Matrix2d rot;
+        rot << 0, -1, 1, 0;
+        Eigen::MatrixXd ff1_norm(2, ff1.cols());
+        ff1_norm << ff1.colwise().norm(), ff1.colwise().norm();
+        Eigen::MatrixXd ff1_unit = ff1.array() / ff1_norm.array();
+        // 定向法向量
+        Eigen::MatrixXd sign_normal = rot * ff1_unit;
+        // 公式法向量
+        Eigen::MatrixXd normal(2, ff1.cols());
+        for (int i = 0; i < ff1.cols(); i++)
+        {
+            normal.col(i) = ff2.col(i) / ff1_norm(0,i) - 
+                                ff1.col(i) * (ff1.col(i).transpose() * ff2.col(i)) / (ff1_norm(0,i)*ff1_norm(0,i)*ff1_norm(0,i));
+            if (normal.col(i).norm() < 0.001)
+            {
+                normal.col(i) << -0.001, -0.001;
+            }
+        }
+        Eigen::ArrayXd flag_dir = (sign_normal.array() * normal.array()).colwise().sum();
+        // std::cout << flag_dir << std::endl;
+
+        // nav_msgs::Path max_dis;
+        //     for (int i = 0; i < ff1.cols(); i++)
+        //     {
+        //         geometry_msgs::PoseStamped max_dis_temp;
+        //         max_dis_temp.pose.position.x = ff(0, i);
+        //         max_dis_temp.pose.position.y = ff(1, i);
+        //         max_dis_temp.pose.position.z = 1.8;
+        //         max_dis.poses.push_back(max_dis_temp);
+
+        //         max_dis_temp.pose.position.x = ff(0, i) + normal(0, i);
+        //         max_dis_temp.pose.position.y = ff(1, i) + normal(1, i);
+        //         max_dis_temp.pose.position.z = 1.8;
+        //         max_dis.poses.push_back(max_dis_temp);
+        //     }
+        //     dis_right_pub.publish(max_dis);
+
+        Eigen::ArrayXi k_cuv;
+        Eigen::ArrayXd route_r, route_l;
+        Eigen::ArrayXd ts_cuv;
+        bsplineFindMaxCurvature(seg_time_k, ts_cuv, k_cuv, route_r, route_l, flag_dir, normal, tt);
+        /* 虽然进行了重新分段，但是最终优化时的分段是以曲率最大处作为断点，因此
+        需要对曲率最大处数组进行扩充，保证其涵盖了头尾。 */
+        int max_cuv_tail = k_cuv(k_cuv.size() - 1);
+        int max_cuv_head = k_cuv(0);
+        int seg_time_k_tail = seg_time_k(seg_time_k.size() - 1);
+        int seg_time_k_head = 0;
+        Eigen::ArrayXd max_cuv_r, max_cuv_l;
+
+        /* 临时修补 */
+        // route_r(0) = 1 / r_max;
+        // route_r(route_r.size() - 1) = 1 / r_max;
+        // route_l(0) = 1 / r_max;
+        // route_l(route_l.size() - 1) = 1 / r_max;
+        
+        if ((max_cuv_tail < seg_time_k_tail) && (max_cuv_head > seg_time_k_head))
+        {
+            Eigen::ArrayXd max_cuv_ts_temp(k_cuv.size() + 2);
+            Eigen::ArrayXi max_cuv_k_temp(k_cuv.size() + 2);
+            Eigen::ArrayXd max_cuv_r_temp(k_cuv.size() + 2);
+            Eigen::ArrayXd max_cuv_l_temp(k_cuv.size() + 2);
+            max_cuv_ts_temp << 0, ts_cuv, tt(tt.size() - 1); 
+            max_cuv_k_temp << seg_time_k_head, k_cuv, seg_time_k_tail;
+            max_cuv_r_temp << 1 / r_max, route_r, 1 / r_max;
+            max_cuv_l_temp << 1 / r_max, route_l, 1 / r_max;
+            max_cuv_ts = max_cuv_ts_temp;
+            max_cuv_k = max_cuv_k_temp;
+            max_cuv_r = max_cuv_r_temp;
+            max_cuv_l = max_cuv_l_temp;
+        }
+        else if (max_cuv_tail < seg_time_k_tail)
+        {
+            Eigen::ArrayXd max_cuv_ts_temp(k_cuv.size() + 1);
+            Eigen::ArrayXi max_cuv_k_temp(k_cuv.size() + 1);
+            Eigen::ArrayXd max_cuv_r_temp(k_cuv.size() + 1);
+            Eigen::ArrayXd max_cuv_l_temp(k_cuv.size() + 1);
+            max_cuv_ts_temp << ts_cuv, tt(tt.size() - 1);
+            max_cuv_k_temp << k_cuv, seg_time_k_tail;
+            max_cuv_r_temp << route_r, 1 / r_max;
+            max_cuv_l_temp << route_l, 1 / r_max;
+            max_cuv_ts = max_cuv_ts_temp;
+            max_cuv_k = max_cuv_k_temp;
+            max_cuv_r = max_cuv_r_temp;
+            max_cuv_l = max_cuv_l_temp;
+        }
+        else if (max_cuv_head > seg_time_k_head) 
+        {
+            Eigen::ArrayXd max_cuv_ts_temp(k_cuv.size() + 1);
+            Eigen::ArrayXi max_cuv_k_temp(k_cuv.size() + 1);
+            Eigen::ArrayXd max_cuv_r_temp(k_cuv.size() + 1);
+            Eigen::ArrayXd max_cuv_l_temp(k_cuv.size() + 1);
+            max_cuv_ts_temp << 0, ts_cuv;
+            max_cuv_k_temp << seg_time_k_head, k_cuv;
+            max_cuv_r_temp << 1 / r_max, route_r;
+            max_cuv_l_temp << 1 / r_max, route_l;
+            max_cuv_ts = max_cuv_ts_temp;
+            max_cuv_k = max_cuv_k_temp;
+            max_cuv_r = max_cuv_r_temp;
+            max_cuv_l = max_cuv_l_temp;
+        }
+        else
+        {
+            Eigen::ArrayXd max_cuv_ts_temp(k_cuv.size());
+            Eigen::ArrayXi max_cuv_k_temp(k_cuv.size());
+            Eigen::ArrayXd max_cuv_r_temp(k_cuv.size());
+            Eigen::ArrayXd max_cuv_l_temp(k_cuv.size());
+            max_cuv_ts_temp << ts_cuv;
+            max_cuv_k_temp << k_cuv;
+            max_cuv_r_temp << route_r;
+            max_cuv_l_temp << route_l;
+            max_cuv_ts = max_cuv_ts_temp;
+            max_cuv_k = max_cuv_k_temp;
+            max_cuv_r = max_cuv_r_temp;
+            max_cuv_l = max_cuv_l_temp;
+        }
+        radiusLeft.max_cuv = max_cuv_l;
+        radiusRight.max_cuv = max_cuv_r;
+        // std::cout << "重新分段处下标 " << std::endl
+        //           << seg_time_k << std::endl;
+        //  std::cout << "记录曲率最大处对应时刻 " << std::endl
+        //           << ts_cuv << std::endl;
+        // std::cout << "记录曲率最大处对应时刻补全 " << std::endl
+        //           << max_cuv_ts << std::endl;
+        // std::cout << "记录曲率最大处下标 " << std::endl
+        //           << k_cuv << std::endl;
+        // std::cout << "记录曲率最大处下标补全" << std::endl
+        //           << max_cuv_k << std::endl;
+        // std::cout << "记录曲率最大处曲率大小r " << std::endl
+        //           << route_r << std::endl;
+        // std::cout << "记录曲率最大处曲率大小r补全 " << std::endl
+        //           << max_cuv_r << std::endl;          
+        // std::cout << "记录曲率最大处曲率大小l " << std::endl
+        //           << route_l << std::endl;
+        // std::cout << "记录曲率最大处曲率大小l补全" << std::endl
+        //           << max_cuv_l << std::endl;
+
+        radiusRight.min_dis_mat = Eigen::MatrixXd::Zero(max_cuv_k.size() - 1, 3);
+        radiusLeft.min_dis_mat = Eigen::MatrixXd::Zero(max_cuv_k.size() - 1, 3);
+        if (gridmap.data.size() > 0)
+        {
+            findObstacle(radiusRight.min_dis_mat, max_cuv_k, tt, ff, sign_normal);
+            findObstacle(radiusLeft.min_dis_mat, max_cuv_k, tt, ff, -1 * sign_normal);
+            // std::cout << radiusRight.min_dis_mat << std::endl;
+            // std::cout << "-------------" << std::endl;
+            // std::cout << radiusLeft.min_dis_mat << std::endl;
+            nav_msgs::Path max_dis;
+            for (int i = 0; i < radiusLeft.min_dis_mat.rows(); i++)
+            {
+                int index = radiusLeft.min_dis_mat(i, 0);
+                double radius = radiusLeft.min_dis_mat(i, 1);
+                geometry_msgs::PoseStamped max_dis_temp;
+                max_dis_temp.pose.position.x = ff(0, index);
+                max_dis_temp.pose.position.y = ff(1, index);
+                max_dis_temp.pose.position.z = 1.8;
+                max_dis.poses.push_back(max_dis_temp);
+
+                max_dis_temp.pose.position.x = ff(0, index) - radius * sign_normal(0, index);
+                max_dis_temp.pose.position.y = ff(1, index) - radius * sign_normal(1, index);
+                max_dis_temp.pose.position.z = 1.8;
+                max_dis.poses.push_back(max_dis_temp);
+            }
+            dis_right_pub.publish(max_dis);
+        }
+
+          /* 规划右侧半径 */
+        radiusPlan(radiusRight.Poly, radiusRight.max_cuv, radiusRight.min_dis_mat);
+        /* 规划左侧半径 */
+        radiusPlan(radiusLeft.Poly, radiusLeft.max_cuv, radiusLeft.min_dis_mat);
+
+        Eigen::ArrayXd rad_r, rad_l, rad_tt;
+        rad_tt = Eigen::VectorXd::LinSpaced(30 * rad_n_poly, max_cuv_ts(0), max_cuv_ts(max_cuv_ts.size() - 1));
+        // std::cout << "rad_tt " << rad_tt << std::endl;
+        // std::cout << "tt " << tt << std::endl;
+        // std::cout << "记录曲率最大处对应时刻补全 " << std::endl
+        //           << max_cuv_ts << std::endl;
+        polys_val_rad(radiusRight.Poly, rad_r, tt, 0);
+        polys_val_rad(radiusLeft.Poly, rad_l, tt, 0);
+
+        nav_msgs::Path tube_right_curve, tube_left_curve;
+        geometry_msgs::PoseStamped rad_pose_stamped;
+
+        swarm_msgs::Pipeline tube;
+        swarm_msgs::Pipeunit unit;
+        Eigen::ArrayXd fo_x_r(tt.size()), fo_y_r(tt.size());
+        Eigen::ArrayXd fo_x_l(tt.size()), fo_y_l(tt.size());
+        for (int i = 0; i < tt.size(); i++)
+        {
+            fo_x_r(i) = ff(0, i) + 1 / rad_r(i) * sign_normal(0, i);
+            fo_y_r(i) = ff(1, i) + 1 / rad_r(i) * sign_normal(1, i);
+            fo_x_l(i) = ff(0, i) - 1 / rad_l(i) * sign_normal(0, i);
+            fo_y_l(i) = ff(1, i) - 1 / rad_l(i) * sign_normal(1, i);
+
+            unit.right.x = fo_x_r(i);
+            unit.right.y = fo_y_r(i);
+            unit.right.z = 1.8;
+            unit.left.x = fo_x_l(i);
+            unit.left.y = fo_y_l(i);
+            unit.left.z = 1.8;
+            unit.middle.x = ff(0, i);
+            unit.middle.y = ff(1, i);
+            unit.middle.z = 1.8;
+            tube.units.push_back(unit);
+
+            rad_pose_stamped.pose.position.x = fo_x_r(i);
+            rad_pose_stamped.pose.position.y = fo_y_r(i);
+            rad_pose_stamped.pose.position.z = 1.8;
+            tube_right_curve.poses.push_back(rad_pose_stamped);
+
+            rad_pose_stamped.pose.position.x = fo_x_l(i);
+            rad_pose_stamped.pose.position.y = fo_y_l(i);
+            rad_pose_stamped.pose.position.z = 1.8;
+            tube_left_curve.poses.push_back(rad_pose_stamped);
+        }
+
+        pipeline_gen_pub.publish(tube);
+        tube_right.publish(tube_right_curve);
+        tube_left.publish(tube_left_curve);
+
+
+
+    }
+
+    void GeneratorFist::bsplineFindMaxCurvature(Eigen::ArrayXi &seg_time, 
+                Eigen::ArrayXd &ts, Eigen::ArrayXi &max_cuv_k, Eigen::ArrayXd &route_r, 
+                Eigen::ArrayXd &route_l, const Eigen::ArrayXd &flag_dir, 
+                const Eigen::MatrixXd &normal, const Eigen::ArrayXd &tt)
+    {
+        /* 查询弯曲方向转折处 */
+        std::vector<int> ts_k;
+        ts_k.push_back(0);
+        int count = 0;
+        for (int k = 1; k < flag_dir.size() - 1; k++)
+        {
+            if (flag_dir(k) * flag_dir(k + 1) < 0)
+            {
+                ts_k.push_back(k);
+                count++;
+            }
+        }
+        if (ts_k[count - 1] != flag_dir.size() - 1)
+        {
+            ts_k.push_back(flag_dir.size() - 1);
+        }
+        // seg_time << ts_k;
+        seg_time = Eigen::ArrayXi::Zero(ts_k.size());
+        for (int i = 0; i < ts_k.size(); i++)
+        {
+            seg_time(i) = ts_k[i];
+        }
+        // std::cout << ts_k.size() << std::endl;
+
+        max_cuv_k = Eigen::ArrayXi::Zero(ts_k.size() - 1); //记录曲率最大处下标
+        route_r = Eigen::ArrayXd::Zero(ts_k.size() - 1);
+        route_l = Eigen::ArrayXd::Zero(ts_k.size() - 1); //记录曲率最大处曲率大小
+        ts = Eigen::ArrayXd::Zero(ts_k.size() - 1);      //对应时刻
+        for (int k = 0; k < ts_k.size() - 1; k++)
+        {
+            double curvature = 1 / r_max;
+            int tmp_k1 = ts_k[k];
+            /* 在分段中找到曲率最大的地方的k和曲率大小 */
+            for (int k1 = ts_k[k]; k1 < ts_k[k + 1]; k1++)
+            {
+                // Eigen::Matrix2d gamma_cross;
+                // gamma_cross << ff2.block(0, k1, 2, 1), ff1.block(0, k1, 2, 1);
+                // double tmp = std::abs(gamma_cross.determinant()) / (ff1.block(0, k1, 2, 1).norm() * ff1.block(0, k1, 2, 1).norm() * ff1.block(0, k1, 2, 1).norm());
+                double tmp = normal.col(k1).norm();
+                if (tmp > curvature)
+                {
+                    curvature = tmp;
+                    tmp_k1 = k1;
+                }
+            }
+
+            max_cuv_k(k) = tmp_k1;
+            ts(k) = tt(tmp_k1);
+            if (flag_dir(tmp_k1) > 0)
+            {
+                route_r(k) = curvature;
+                route_l(k) = 1 / r_max;
+            }
+            else
+            {
+                route_l(k) = curvature;
+                route_r(k) = 1 / r_max;
+            }
+        }
+
+      
+
+
     }
 
     void GeneratorFist::pathCallback(const nav_msgs::Path::ConstPtr &msg)
@@ -250,7 +630,7 @@ namespace Tube_planning
                 {
                     idx = idx + 1;
                 }
-                vals(i) = poly_val(Poly.block(0, idx, n_coef, 1), t, r);
+                vals(i) = poly_val(Poly.block(0, idx, rad_n_coef, 1), t, r);
             }
         }
     }
@@ -308,9 +688,9 @@ namespace Tube_planning
         Aeq.block(1, 0, 1, rad_n_coef) = tvec;
 
         calcTvec(max_cuv_ts(max_cuv_ts.size() - 1), 0, tvec);
-        Aeq.block(2, rad_n_coef * (rad_n_poly - 1), 1, n_coef) = tvec;
+        Aeq.block(2, rad_n_coef * (rad_n_poly - 1), 1, rad_n_coef) = tvec;
         calcTvec(max_cuv_ts(max_cuv_ts.size() - 1), 1, tvec);
-        Aeq.block(3, rad_n_coef * (rad_n_poly - 1), 1, n_coef) = tvec;
+        Aeq.block(3, rad_n_coef * (rad_n_poly - 1), 1, rad_n_coef) = tvec;
 
         ub.head(4) << 100, 0,  100, 0;
         lb.head(4) << rad_p0, 0,  rad_pe, 0;
@@ -460,7 +840,7 @@ namespace Tube_planning
             T(i) = pow(t2, i + 1) - pow(t1, i + 1);
         }
 
-        Q_temp = Eigen::MatrixXd::Zero(n_coef, n_coef);
+        Q_temp = Eigen::MatrixXd::Zero(rad_n_coef, rad_n_coef);
         for (int i = r + 1; i <= n_order + 1; i++)
         {
             for (int j = i; j <= n_order + 1; j++)
@@ -789,27 +1169,11 @@ namespace Tube_planning
                 max_dis_temp.pose.position.z = 1.8;
                 max_dis.poses.push_back(max_dis_temp);
             }
-            for (int i = 0; i < radiusRight.min_dis_mat.rows(); i++)
-            {
-                int index = radiusRight.min_dis_mat(i, 0);
-                double radius = radiusRight.min_dis_mat(i, 1);
-                geometry_msgs::PoseStamped max_dis_temp;
-                max_dis_temp.pose.position.x = ff(0, index);
-                max_dis_temp.pose.position.y = ff(1, index);
-                max_dis_temp.pose.position.z = 1.8;
-                max_dis.poses.push_back(max_dis_temp);
-
-                max_dis_temp.pose.position.x = ff(0, index) + radius * sign_normal(0, index);
-                max_dis_temp.pose.position.y = ff(1, index) + radius * sign_normal(1, index);
-                max_dis_temp.pose.position.z = 1.8;
-                max_dis.poses.push_back(max_dis_temp);
-            }
-
             dis_right_pub.publish(max_dis);
 
 
         }
-
+        
 
     }
 
@@ -971,7 +1335,7 @@ namespace Tube_planning
             {
                 Eigen::Matrix2d gamma_cross;
                 gamma_cross << ff2.block(0, k1, 2, 1), ff1.block(0, k1, 2, 1);
-                double tmp = gamma_cross.norm() / (ff1.block(0, k1, 2, 1).norm() * ff1.block(0, k1, 2, 1).norm() * ff1.block(0, k1, 2, 1).norm());
+                double tmp = std::abs(gamma_cross.determinant()) / (ff1.block(0, k1, 2, 1).norm() * ff1.block(0, k1, 2, 1).norm() * ff1.block(0, k1, 2, 1).norm());
                 if (tmp > curvature)
                 {
                     curvature = tmp;

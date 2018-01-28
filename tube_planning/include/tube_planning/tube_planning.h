@@ -82,6 +82,11 @@ namespace Tube_planning
         void polys_val_rad(const Eigen::MatrixXd &Poly, Eigen::ArrayXd &vals, const Eigen::ArrayXd &tt, const int r);
         void wait_for_key();
         void insertPath(const Eigen::MatrixXd& ff);
+        void bsplineCallback(const nav_msgs::Path::ConstPtr &msg);
+        void bsplineFindMaxCurvature(Eigen::ArrayXi &seg_time, 
+            Eigen::ArrayXd &ts, Eigen::ArrayXi &max_cuv_k, Eigen::ArrayXd &route_r, 
+            Eigen::ArrayXd &route_l, const Eigen::ArrayXd &flag_dir, 
+            const Eigen::MatrixXd &normal, const Eigen::ArrayXd &tt);
     public:
         GeneratorFist()
         {

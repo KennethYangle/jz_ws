@@ -1,9 +1,9 @@
 {
     "Docs": "settings.md",
     "MODE": "Simulation",
-    "SCENE": "paper",
+    "SCENE": "32s",
     "Debug": {
-        "is_show_rgb": true,
+        "is_show_rgb": false,
         "is_show_hsv": false
     },
     "RealFlight": {
