@@ -59,7 +59,7 @@ class PiplineShower:
         self.copterID += 1
         mavros_x,mavros_y,mavros_z = PosE
         # PosE = [mavros_y+self.param_y, mavros_x+self.param_x, -mavros_z+self.param_z]
-        PosE = [mavros_x+self.param_x, mavros_y+self.param_y, mavros_z+self.param_z]
+        PosE = [mavros_y+self.param_x, mavros_x+self.param_y, mavros_z+self.param_z]
         obj_msg = RflyObject()
         obj_msg.copterID = self.copterID
         obj_msg.vehicleType = vehicleType
@@ -75,7 +75,7 @@ class PiplineShower:
     # 计算方向和距离
     def cal_pos_size(self,start, end):
         PosE = [(start.x + end.x) / 2,(start.y + end.y) / 2,start.z]
-        AngEuler = [0,0,np.arctan2(end.y - start.y, end.x - start.x)]
+        AngEuler = [0,0,np.pi/2-np.arctan2(end.y - start.y, end.x - start.x)]
         Scale = [np.linalg.norm([end.y - start.y, end.x - start.x]),0.05,1]
         return PosE,AngEuler,Scale
 
