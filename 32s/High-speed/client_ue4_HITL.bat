@@ -16,13 +16,6 @@ REM Set use DLL model name or not, use number index or name string
 REM This option is useful for simulation with other types of vehicles instead of multicopters
 set DLLModel=0
 
-REM Check if DLLModel is a name string, if yes, copy the DLL file to CopterSim folder
-SET /A DLLModelVal=DLLModel
-if %DLLModelVal% NEQ %DLLModel% (
-    REM Copy the latest dll file to CopterSim folder
-    copy /Y %~dp0\%DLLModel%.dll %PSP_PATH%\CopterSim\external\model\%DLLModel%.dll
-)
-
 REM Set the simulation mode on CopterSim, use number index or name string
 REM e.g., SimMode=0 equals to  SimMode=PX4_HITL
 set SimMode=0
@@ -30,21 +23,19 @@ set SimMode=0
 
 REM Set the map, use index or name of the map on CopterSim
 REM e.g., UE4_MAP=1 equals to UE4_MAP=Grasslands
-SET UE4_MAP=OldFactory1
+SET UE4_MAP=VisionRingBlank
 
 REM Set the origin x,y position (m) and yaw angle (degree) at the map
-SET /a ORIGIN_POS_X=-144
-SET /a ORIGIN_POS_Y=43
-SET /a ORIGIN_YAW=90
+SET /a ORIGIN_POS_X=0
+SET /a ORIGIN_POS_Y=0
+SET /a ORIGIN_YAW=0
 
 REM Set the interval between two vehicle, unit:m 
 SET /a VEHICLE_INTERVAL=2
 
 
-REM Set broadcast to other computer; IS_BROADCAST=0: only this computer, IS_BROADCAST=1: broadcast; 
-REM or use IP address to increase speed, e.g., IS_BROADCAST=192.168.3.1
-REM Note: in IP mode, IS_BROADCAST=0 equals to IS_BROADCAST=127.0.0.1, IS_BROADCAST=1 equals to IS_BROADCAST=255.255.255.255
-REM You can also use a IP list with seperator "," or ";" to specify IPs to send, e.g., 127.0.0.1,192.168.1.4,192.168.1.5
+REM Set broadcast to other computer; 0: only this computer, 1: broadcast; or use IP address to increase speed
+REM e.g., IS_BROADCAST=0 equals to IS_BROADCAST=127.0.0.1, IS_BROADCAST=1 equals to IS_BROADCAST=255.255.255.255
 SET IS_BROADCAST=1
 
 REM Set UDP data mode; 0: UDP_FULL, 1:UDP_Simple, 2: Mavlink_Full, 3: Mavlink_simple. input number or string
@@ -58,6 +49,7 @@ set CURRENT_PATH=%cd%
 %PSP_PATH%\Python38\python.exe _mav_print.py
 
 C:
+
 
 
 ECHO.
@@ -89,7 +81,6 @@ for /f "delims==_" %%i in ('set _') do (
 echo Please input the Pixhawk COM port list for HIL
 echo Use ',' as the separator if more than one Pixhawk
 echo E.g., input 3 for COM3 of Pixhawk on the computer
-echo Input 3,6,7 for COM3, COM6 and COM7 of Pixhawks 
 if defined HASCOM (
     echo Available COM list on this computer is: %COMDef%
 ) else (
@@ -101,7 +92,7 @@ ECHO ---------------------------------------
 SET /P ComNum=My COM list for HITL simulation is:
 SET string=%ComNum%
 set subStr = ""
-set /a VehicleNum=2
+set /a VehicleNum=0
 :split
     for /f "tokens=1,* delims=," %%i in ("%string%") do (
     set subStr=%%i
@@ -116,8 +107,7 @@ set /a VehicleNum=2
 if not "%string%"=="" goto split
 REM cho total com number is %VehicleNum%
 
-REM SET /A VehicleTotalNum=%VehicleNum% + %START_INDEX% - 1
-SET /A VehicleTotalNum=3
+SET /A VehicleTotalNum=%VehicleNum% + %START_INDEX% - 1
 if not defined TOTOAL_COPTER (
     SET /A TOTOAL_COPTER=%VehicleTotalNum%
 )
@@ -145,7 +135,7 @@ tasklist|find /i "RflySim3D.exe" || start %PSP_PATH%\RflySim3D\RflySim3D.exe
 choice /t 5 /d y /n >nul
 
 
-tasklist|find /i "CopterSim.exe" && taskkill /f /im "CopterSim.exe"
+tasklist|find /i "CopterSim.exe" && taskkill /im "CopterSim.exe"
 ECHO Kill all CopterSims
 
 
@@ -153,7 +143,7 @@ REM CptSmPath
 cd %PSP_PATH%\CopterSim
 
 set /a cntr = %START_INDEX%
-set /a endNum = %VehicleTotalNum% +1-1
+set /a endNum = %VehicleTotalNum% +1
 set /a portNum = %UDP_START_PORT% + ((%START_INDEX%-1)*2)
 SET string=%ComNum%
 :split1
@@ -175,19 +165,13 @@ REM QGCPath
 tasklist|find /i "QGroundControl.exe" || start %PSP_PATH%\QGroundControl\QGroundControl.exe
 ECHO Start QGroundControl
 
-REM Add models and transport sensors
-cd %CURRENT_PATH%
-call %CURRENT_PATH%\AddModels.bat
 %PSP_PATH%\Python38\python.exe %CURRENT_PATH%\client_ue4.py
-
-
 
 pause
 
 REM kill all applications when press a key
-tasklist|find /i "CopterSim.exe" && taskkill /f /im "CopterSim.exe"
+tasklist|find /i "CopterSim.exe" && taskkill /im "CopterSim.exe"
 tasklist|find /i "QGroundControl.exe" && taskkill /f /im "QGroundControl.exe"
 tasklist|find /i "RflySim3D.exe" && taskkill /f /im "RflySim3D.exe"
-tasklist|find /i "python.exe" && taskkill /f /im "python.exe"
 
 ECHO Start End.
