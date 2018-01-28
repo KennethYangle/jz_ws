@@ -19,8 +19,7 @@ namespace Tube_planning
         double total_time;
         int n_order, n_coef, n_poly, n_obj;
         int path_length;
-
-        int count;
+        bool flag_gen;
 
         Eigen::MatrixXd Path, Poly_x, Poly_y;
         Eigen::ArrayXd ts;
@@ -31,10 +30,9 @@ namespace Tube_planning
             float resolution;
             int width;
             int height;
+            double offset_x;
+            double offset_y;
             Eigen::MatrixXi data;
-            double position_x;
-            double position_y;
-            double position_z;
         };
         GridMap gridmap;
 
@@ -83,6 +81,7 @@ namespace Tube_planning
         double poly_val(const Eigen::MatrixXd& poly, const double t, const int r);
         void polys_val_rad(const Eigen::MatrixXd &Poly, Eigen::ArrayXd &vals, const Eigen::ArrayXd &tt, const int r);
         void wait_for_key();
+        void insertPath(const Eigen::MatrixXd& ff);
     public:
         GeneratorFist()
         {

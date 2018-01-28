@@ -13,7 +13,8 @@ namespace Tube_planning
     {
 
         /* sub nankai problem map */
-        nk_map_sub = nh.subscribe("/map2d1", 10, &Visiualization::nankaiCallback, this);
+        // nk_map_sub = nh.subscribe("/map2d1", 10, &Visiualization::nankaiCallback, this);
+        nk_map_sub = nh.subscribe("/origin_map1", 10, &Visiualization::nankaiCallback, this);
         // pipe_sub = nh.subscribe("/tube/right_dis", 10, &Visiualization::pipeCallback, this);
         nk_map_pub = nh.advertise<nav_msgs::OccupancyGrid>("/visualization/map", 10);
 

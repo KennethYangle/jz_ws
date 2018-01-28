@@ -19,21 +19,21 @@
 /* program tree
 GeneratorFist::init
 |_ pathCallback
-|      |_allocateTime
-|      |_generatorPlan
-|      |   |_generatorObjectFunction
-|      |   |     |_computeQ
-|      |   |_generatorConstraint
-|      |         |_calcTvec
-|      |_generatorCalculation
-|      |   |_polys_val
-|      |   |    |_poly_val
-|      |   |_findMaxCurvature
-|      |   |_findObstacle
-|      |_radiusPlan
-|           |_radiusObjectFunction
-|           |_radiusConstraint
-|_gridmapCallback
+|      |_ allocateTime
+|      |_ generatorPlan
+|      |   |_ generatorObjectFunction
+|      |   |     |_ computeQ
+|      |   |_ generatorConstraint
+|      |         |_ calcTvec
+|      |_ generatorCalculation
+|      |   |_ polys_val
+|      |   |    |_ poly_val
+|      |   |_ findMaxCurvature
+|      |   |_ findObstacle
+|      |_ radiusPlan
+|           |_ radiusObjectFunction
+|           |_ radiusConstraint
+|_ gridmapCallback
 */
 namespace Tube_planning
 {
@@ -51,7 +51,7 @@ namespace Tube_planning
         // path_sub = nh.subscribe("/generator_curve/paths", 10, &GeneratorFist::pathCallback, this);
         gridmap_sub = nh.subscribe("/visualization/map", 10, &GeneratorFist::gridmapCallback, this);
         path_sub = nh.subscribe("/expect_pos"+std::to_string(uav_id), 10, &GeneratorFist::pathCallback, this);
-
+        
         gen_pub = nh.advertise<nav_msgs::Path>("/tube/generator_curve", 10);
         pipeline_gen_pub = nh.advertise<swarm_msgs::Pipeline>("/pipeline/paths", 1, true);
         cuv_right_pub = nh.advertise<nav_msgs::Path>("/tube/max_cuv_r", 10);
@@ -65,10 +65,9 @@ namespace Tube_planning
         gridmap.resolution = msg->info.resolution;
         gridmap.width = msg->info.width;
         gridmap.height = msg->info.height;
+        gridmap.offset_x = msg->info.origin.position.x;
+        gridmap.offset_y = msg->info.origin.position.y;
         gridmap.data = Eigen::MatrixXi::Zero(gridmap.height, gridmap.width);
-        gridmap.position_x = msg->info.origin.position.x;
-        gridmap.position_y = msg->info.origin.position.y;
-        gridmap.position_z = msg->info.origin.position.z;
 
         for (int i = 0; i < gridmap.height; i++)
         {
@@ -92,7 +91,6 @@ namespace Tube_planning
             Path(i, 2) = r_max;
         }
 
-        allocateTime(Path);
 
         /* 初始化起止点参数 */
         p0 = Path.block(0, 0, 1, 2);
@@ -103,12 +101,30 @@ namespace Tube_planning
         ve = Path.block(path_length - 1, 0, 1, 2) - Path.block(path_length - 2, 0, 1, 2);
         ve = ve / ve.norm();
         ae << 0, 0;
-        /* 规划X轴 */
-        generatorPlan(Path.block(0, 0, path_length, 1), 0);
-        /* 规划Y轴 */
-        generatorPlan(Path.block(0, 1, path_length, 1), 1);
+        flag_gen = true;
+        while (1)
+        {
+            allocateTime(Path);
 
-        generatorCalculation();
+            /* 规划X轴 */
+            generatorPlan(Path.block(0, 0, path_length, 1), 0);
+            /* 规划Y轴 */
+            generatorPlan(Path.block(0, 1, path_length, 1), 1);
+
+            generatorCalculation();
+
+            if (flag_gen)
+            {
+                std::cout << "-------------------next paths------------------" << std::endl;
+                break;
+            }
+            else
+            {
+                std::cout << "continue" << std::endl;
+            }
+        }
+        
+        
 
         /* 规划右侧半径 */
         radiusPlan(radiusRight.Poly, radiusRight.max_cuv, radiusRight.min_dis_mat);
@@ -185,16 +201,10 @@ namespace Tube_planning
             this_pose_stamped.pose.position.z = 1.8;
             tube_left_curve.poses.push_back(this_pose_stamped);
         }
-        count = count + 1;
-        if (count > 10)
-        {
-            count = 1;
-            pipeline_gen_pub.publish(tube);
-            tube_right.publish(tube_right_curve);
-            tube_left.publish(tube_left_curve);
-        }
 
-        
+        pipeline_gen_pub.publish(tube);
+        tube_right.publish(tube_right_curve);
+        tube_left.publish(tube_left_curve);
 
 
             
@@ -360,7 +370,7 @@ namespace Tube_planning
         }
         
         double w1 = 1;
-        double w2 = 0.2;
+        double w2 = 0.02;
         w1 = w1 / (w1 + w2);
         w2 = w2 / (w1 + w2);
         Q_all = w1 * Q_all0 + w2 * Q_all1;
@@ -547,11 +557,7 @@ namespace Tube_planning
 
             path.poses.push_back(this_pose_stamped);
         }
-        if (count > 5)
-        {
-            gen_pub.publish(path);
-        }
-        
+        gen_pub.publish(path);
         // pipeline_pub.publish(tube);
 
         // Gnuplot g1("lines");
@@ -575,6 +581,7 @@ namespace Tube_planning
         ff << xx.transpose(), yy.transpose();
         ff1 << xx1.transpose(), yy1.transpose();
         ff2 << xx2.transpose(), yy2.transpose();
+
         
         // 公式法向量
         Eigen::MatrixXd ff1_norm(2, 30 * n_poly);
@@ -676,7 +683,7 @@ namespace Tube_planning
         //           << ts_cuv << std::endl;
         // std::cout << "记录曲率最大处对应时刻补全 " << std::endl
         //           << max_cuv_ts << std::endl;
-        // // std::cout << "记录曲率最大处下标 " << std::endl
+        // std::cout << "记录曲率最大处下标 " << std::endl
         //           << k_cuv << std::endl;
         // std::cout << "记录曲率最大处下标补全" << std::endl
         //           << max_cuv_k << std::endl;
@@ -758,11 +765,11 @@ namespace Tube_planning
         radiusLeft.min_dis_mat = Eigen::MatrixXd::Zero(max_cuv_k.size() - 1, 3);
         if (gridmap.data.size() > 0)
         {
+            insertPath(ff);
             findObstacle(radiusRight.min_dis_mat, max_cuv_k, tt, ff, sign_normal);
             findObstacle(radiusLeft.min_dis_mat, max_cuv_k, tt, ff, -1 * sign_normal);
-            // std::cout << "radiusRight.min_dis_mat" << std::endl;
             // std::cout << radiusRight.min_dis_mat << std::endl;
-            // std::cout << "radiusLeft.min_dis_mat" << std::endl;
+            // std::cout << "-------------" << std::endl;
             // std::cout << radiusLeft.min_dis_mat << std::endl;
             // wait_for_key();
 
@@ -802,8 +809,69 @@ namespace Tube_planning
 
 
         }
-        
 
+
+    }
+
+    void GeneratorFist::insertPath(const Eigen::MatrixXd& ff)
+    {
+        for (int k = 0; k < ff.cols(); k++)
+        {
+            int count = floor(k / 30);
+            // std::cout << "path length: " << path_length << std::endl;
+            int x_b = std::min(std::max(static_cast<int>(ceilf((ff(0, k) - gridmap.offset_x) / gridmap.resolution)), 0), gridmap.width - 1);
+            int y_b = std::min(std::max(static_cast<int>((ff(1, k) - gridmap.offset_y) / gridmap.resolution), 0), gridmap.height - 1);
+
+            if (gridmap.data(y_b,x_b) > 20)
+            {
+                // std::cout << "[y_b,x_b] " << y_b << "," << x_b << std::endl;
+                Eigen::Vector2d path_ob;
+                path_ob << ff(0, k) , ff(1, k);
+                Eigen::Vector2d vec_0 = path_ob - Path.block(count - 1, 0, 1, 2).transpose();
+                Eigen::Vector2d vec_1 = Path.block(count , 0, 1, 2).transpose() - Path.block(count - 1, 0, 1, 2).transpose();
+                double k1 = vec_0.transpose() * vec_1;
+                double k2 =  vec_1.squaredNorm();
+                double k_tmp = k1 / k2;
+                Eigen::Vector2d vec_2 = k_tmp * vec_1 + Path.block(count - 1, 0, 1, 2).transpose();
+                int x_b_path = std::min(std::max(static_cast<int>((vec_2(0) - gridmap.offset_x) / gridmap.resolution), 0), gridmap.width - 1);
+                int y_b_path = std::min(std::max(static_cast<int>((vec_2(1) - gridmap.offset_y) / gridmap.resolution), 0), gridmap.height - 1);
+                // std::cout << y_b_path << "," << x_b_path << std::endl;
+                // std::cout << "ff.cols() " << ff.cols() << std::endl;
+                // std::cout << "k: " << k << " k/30 : " << k / 30 << std::endl;
+                // std::cout << "count :" << count << std::endl;
+                // std::cout << "path_ob " << path_ob << std::endl;
+                // std::cout <<  "path0 " << Path.block(count, 0, 1, 2) << std::endl;
+                // std::cout << "vec_0 = path_ob - path0 " << vec_0 << std::endl;
+                // std::cout <<  "path1 " << Path.block(count + 1, 0, 1, 2) << std::endl;
+                // std::cout << "vec_1 = path1 - path0" << vec_1 << std::endl;
+                // std::cout <<  "vec2 " << vec_2.transpose() << std::endl;
+                // std::cout <<  "path1 " << Path.block(count + 1, 0, 1, 2) << std::endl;
+                // std::cout << "Path" << std::endl << Path << std::endl;
+                if (gridmap.data(y_b_path, x_b_path) > 20)
+                {
+                    flag_gen = true;
+                    std::cout << "path intersect with obstacle, insert path processing stop." << std::endl;
+                    break;
+                }
+                Eigen::Vector3d path_tmp;
+                path_tmp << vec_2,r_max;
+                Eigen::MatrixXd Path_before = Path;
+                Eigen::MatrixXd Path_now(path_length + 1, 3);
+                Path_now.block(0, 0, count , 3) = Path.block(0, 0, count, 3); 
+                Path_now.block(count , 0, 1, 3) = path_tmp.transpose();
+                Path_now.block(count + 1, 0, path_length - count , 3) = Path.block(count, 0, path_length - count , 3);
+                Path = Path_now;
+                path_length ++;
+                std::cout << "Path_before" << std::endl << Path_before << std::endl;
+                flag_gen = false; // 生成线与障碍物相交，取非
+                std::cout << "find obstacle" << std::endl;
+                break;
+            }
+            else
+            {
+                flag_gen = true;
+            }
+        }
     }
 
     void GeneratorFist::findObstacle(Eigen::MatrixXd& min_dis_k, const Eigen::ArrayXi& seg_time_k, const Eigen::ArrayXd& tt, const Eigen::MatrixXd& ff, const Eigen::MatrixXd& sign_normal)
@@ -817,15 +885,17 @@ namespace Tube_planning
             for (int k1 = seg_time_k(k); k1 < seg_time_k(k + 1); k1++)
             {
                 /* 计算倾斜角 */
-                double xp = ff(0, k1) - gridmap.position_x;
-                double yp = ff(1, k1) - gridmap.position_y;
+                double xp = ff(0, k1) - gridmap.offset_x;
+                double yp = ff(1, k1) - gridmap.offset_y;
                 double theta = atan2(sign_normal(1, k1), sign_normal(0, k1));
-                // std::cout << "ff(0, k1) " << ff(0, k1) << std::endl;
-                // std::cout << "xp " << xp << std::endl;
-                // std::cout << "x " << gridmap.position_x << std::endl;
-                // std::cout << "ff(1, k1) " << ff(1, k1) << std::endl;
-                // std::cout << "yp " << yp << std::endl;
-                // std::cout << "y " << gridmap.position_y << std::endl;
+                // if (sign_normal(0, k1) < 0 && sign_normal(1, k1) > 0)
+                // {
+                //     theta = theta + M_PI;
+                // }
+                // else if (sign_normal(0, k1) < 0 && sign_normal(1, k1) < 0)
+                // {
+                //     theta = theta - M_PI;
+                // }
                 /* 寻找障碍物 */
                 int k2;
                 for (k2 = 0; k2 < r_max / gridmap.resolution; k2++)
@@ -837,18 +907,23 @@ namespace Tube_planning
                     
                     if (gridmap.data(bw_y, bw_x) > 50)
                     {
+                        // std::cout << "find the obstacle: " << k2 * gridmap.resolution<< std::endl;
                         // std::cout << "bw_x: " << bw_x << std::endl;
                         // std::cout << "bw_y: " << bw_y << std::endl;
-                        // std::cout << "find the obstacle: " << k2 * gridmap.resolution << std::endl;
-                        // std::cout << "index: " << k1 << std::endl;
+                        // std::cout << "xp: " << xp << std::endl;
+                        // std::cout << "yp: " << yp << std::endl;
+                        // std::cout << "ff(0, k1): " << ff(0, k1) << std::endl;
+                        // std::cout << "ff(1, k1): " << ff(1, k1) << std::endl;
+                        // std::cout << "gridmap.offset_x: " << gridmap.offset_x << std::endl;
+                        // std::cout << "gridmap.offset_y: " << gridmap.offset_y << std::endl;
                         break;
                     }
                 }
-                double mindis_tmp = k2 * gridmap.resolution;
+                double mindis_tmp = (k2 - 1) * gridmap.resolution;
                 if (mindis_tmp < mindis)
                 {
                     min_dis_k(k, 0) = k1;     //最大距离对应下标
-                    min_dis_k(k, 1) = std::max(mindis_tmp, 0.1) - gridmap.resolution;             //最大距离
+                    min_dis_k(k, 1) = std::max(mindis_tmp, 0.1);             //最大距离
                     min_dis_k(k, 2) = tt(k1); //最大距离对应时刻
                     mindis = mindis_tmp;
                 }

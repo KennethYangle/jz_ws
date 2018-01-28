@@ -4,6 +4,7 @@
 
 from math import sqrt, atan2, sin, cos
 import numpy as np
+from copy import deepcopy
 import rospy
 
 # from simulation_environment import generate_gridmap, generate_targets, generate_uav_init
@@ -38,6 +39,7 @@ class other_part_simulation:
         elif level_id == 2:
             self.std_height = 6
         self.grid_map = generate_map(self.level_id)
+        self.org_map = deepcopy(self.grid_map)
         self.expand_map()
         self.random_tar = False
         if self.random_tar:
@@ -69,6 +71,7 @@ class other_part_simulation:
         self.target_publisher = rospy.Publisher('/bounding_boxes' + str(self.level_id), BoundingBoxes, queue_size=10)
         # self.id_tarTimer_dict = {key: value for (key, value) in [(uid, rospy.Timer(rospy.Duration(0.2), lambda x: self.send_simu_tar(x, uid))) for uid in range(self.uav_num)]}
         self.map_publisher = rospy.Publisher('/map2d' + str(self.level_id), OccupancyGrid, queue_size=10)
+        self.org_map_publisher = rospy.Publisher('/origin_map' + str(self.level_id), OccupancyGrid, queue_size=10)
 
     @staticmethod
     def distance_pos(pos1, pos2):
@@ -196,6 +199,16 @@ class other_part_simulation:
                 simu_tars.bounding_boxes.append(simu_tar)
         self.target_publisher.publish(simu_tars)
 
+    def send_org_map(self):
+        simu_occu = OccupancyGrid()
+        simu_map = list(map(int, self.org_map.flatten()))
+        simu_occu.data = simu_map
+        simu_occu.info.resolution = self.resolution
+        simu_occu.info.origin.position.x, simu_occu.info.origin.position.y = self.org_idx_in_global
+        simu_occu.info.origin.position.z = self.std_height
+        simu_occu.info.height, simu_occu.info.width = self.grid_map.shape
+        self.org_map_publisher.publish(simu_occu)
+    
     def send_simu_map(self, msg, *args):
         simu_occu = OccupancyGrid()
         simu_map = list(map(int, self.grid_map.flatten()))
@@ -296,6 +309,7 @@ class other_part_simulation:
         # print(list(self.swarm_info_dict.keys()))
         if self.interval % 10 == 0:
             self.send_simu_map(None, -1)
+            self.send_org_map()
         for uid in list(self.swarm_info_dict.keys()):
             if uid not in self.id_currentPos_dict:
                 continue
