@@ -6,6 +6,7 @@ import numpy as np
 import os
 import json
 import rospy, rospkg
+import cv2
 from geometry_msgs.msg import TwistStamped, PoseStamped
 from swarm_msgs.msg import Action, BoundingBoxes
 
@@ -29,6 +30,7 @@ class Allocation:
         self.mav_R_dic = dict()
         self.img_pos_dic = dict()
         self.R_ec_dic = dict()
+        self.features_info = dict()
         self.is_initialized_poses = [False for i in range(self.drone_num)]
         self.is_initialized_imges = [False for i in range(self.drone_num)]
         self.dj_action = Action()
@@ -117,11 +119,13 @@ class Allocation:
             T_ce = mav_pos.reshape((-1,1))
             self.T_ce_dic[name] = T_ce
 
-        features_info = dict()
         for id, pos_i in base_features.items():
-            features_info[id] = dict()
-            features_info[id]["matched_pos_i_list"] = [pos_i]
-            features_info[id][base_name] = id
+            self.features_info[id] = dict()
+            self.features_info[id]["matched_pos_i_list"] = [pos_i]
+            self.features_info[id][base_name] = id
+            self.features_info[id]["R_ec_list"] = [self.R_ec_dic[base_name]]
+            self.features_info[id]["T_ce_list"] = [self.T_ce_dic[base_name]]
+            self.features_info[id]["M_list"] = [self.K.dot(self.R_ec_dic[base_name]).dot( np.hstack((np.identity(3), -self.T_ce_dic[base_name])) )]
 
         # 循环其他飞机
         for drone_name, features in self.img_pos_dic.items():
@@ -139,12 +143,31 @@ class Allocation:
                         best_id = df_id
 
                 if min_Sam < self.th_Sam:
-                    features_info[bf_id]["matched_pos_i_list"].append(best_fe)
-                    features_info[bf_id][drone_name] = best_id
-        print("features_info: {}".format(features_info))
+                    self.features_info[bf_id]["matched_pos_i_list"].append(best_fe)
+                    self.features_info[bf_id][drone_name] = best_id
+                    self.features_info[bf_id]["R_ec_list"].append(self.R_ec_dic[drone_name])
+                    self.features_info[bf_id]["T_ce_list"].append(self.T_ce_dic[drone_name])
+                    self.features_info[bf_id]["M_list"].append( self.K.dot(self.R_ec_dic[drone_name]).dot( np.hstack((np.identity(3), -self.T_ce_dic[drone_name])) ) )
+        print("features_info: {}".format(self.features_info))
 
-        # 三维重建
-        
+    def reconstruction(self):
+        for fe_id, fe_info in self.features_info.items():
+            srcA, srcb = [], []
+            for i in range(len(fe_info["matched_pos_i_list"])):
+                xi, yi = fe_info["matched_pos_i_list"][i][0], fe_info["matched_pos_i_list"][i][1]
+                M = fe_info["M_list"][i]
+                srcA.append([M[2,0]*xi-M[0,0], M[2,1]*xi-M[0,1], M[2,2]*xi-M[0,2]])
+                srcA.append([M[2,0]*yi-M[1,0], M[2,1]*yi-M[1,1], M[2,2]*yi-M[1,2]])
+                srcb.append([M[0,3]-M[2,3]*xi])
+                srcb.append([M[1,3]-M[2,3]*yi])
+            if len(srcA) >= 4:
+                ret, dstP = cv2.solve(np.array(srcA), np.array(srcb), flags=cv2.DECOMP_SVD)
+                if not ret:
+                    print("Solve Failed!!!")
+                fe_info["pos_3d"] = dstP.flatten()
+        print("features_info_3d: {}".format(self.features_info))
+
+
 
 
 
@@ -164,6 +187,13 @@ class Allocation:
 
         # 匹配
         self.match_features()
+        
+        # 三维重建
+        self.reconstruction()
+
+        # 目标分配
+
+        # 写入dj_action
 
         # publish dj_action
         while not rospy.is_shutdown():
