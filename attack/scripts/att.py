@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-import rospy
+import rospy, rospkg
 import os
 import json
 import numpy as np
 import math
 import time
 import threading
-import Tkinter
 from swarm_msgs.msg import Action
 from swarm_msgs.msg import BoundingBox, BoundingBoxes
 from geometry_msgs.msg import *
@@ -56,7 +55,6 @@ def mav_vel_cb(msg):
 
 def pos_image_cb(msg):
     global pos_i, image_failed_cnt, dj_action
-    print("msg_data: {}".format(msg.data))
     x, y = 0, 0
     if dj_action.dj == True:
         expect_id = dj_action.id
@@ -75,7 +73,7 @@ def pos_image_cb(msg):
     else:
         pos_i[0] = x
         pos_i[1] = y
-    print("pos_i: {}".format(pos_i))
+    # print("pos_i: {}".format(pos_i))
 
 def expect_action_cb(msg):
     global dj_action
@@ -83,7 +81,8 @@ def expect_action_cb(msg):
 
 
 if __name__=="__main__":
-    setting_file = open(os.path.join(os.path.expanduser('~'),"Rfly_Attack/src","settings.json"))
+    src_path = os.path.join(rospkg.RosPack().get_path("offboard_pkg"), "..")
+    setting_file = open(os.path.join(src_path, "settings.json"))
     setting = json.load(setting_file)
     print(json.dumps(setting, indent=4))
 
@@ -113,8 +112,9 @@ if __name__=="__main__":
 
     # start
     rate = rospy.Rate(50)
+    last_request = rospy.Time.now().to_sec()
     while not rospy.is_shutdown():
-        print("time: {}".format(rospy.Time.now().to_sec() - last_request.to_sec()))
+        print("time: {}".format(rospy.Time.now().to_sec() - last_request))
         pos_info = {"mav_pos": mav_pos, "mav_vel": mav_vel, "mav_R": mav_R}
 
         if dj_action.dj == True:

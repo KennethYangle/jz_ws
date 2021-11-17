@@ -5,4 +5,8 @@
         <param name="drone_id" value="$(arg drone_id)"/>
         <param name="drone_num" value="$(arg drone_num)"/>
    </node>
+   <node pkg="decision" type="allocation.py" name="allocation_node_$(arg drone_id)" output="screen">
+        <param name="drone_id" value="$(arg drone_id)"/>
+        <param name="drone_num" value="$(arg drone_num)"/>
+   </node>
 </launch>

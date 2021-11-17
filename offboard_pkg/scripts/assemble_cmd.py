@@ -61,7 +61,7 @@ class Assemble:
     def begin_task(self):
         rate = rospy.Rate(50)
         while not rospy.is_shutdown():
-            if self.dj_cmd.dj == True:
+            if self.dj_action.dj == True:
                 self.vel_pub.publish(self.dj_cmd)
             else:
                 self.vel_pub.publish(self.pipeline_cmd)

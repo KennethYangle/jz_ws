@@ -10,7 +10,6 @@ from sensor_msgs.msg import Image
 from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
-from gazebo_msgs.srv import *
 from swarm_msgs.msg import BoundingBox, BoundingBoxes
 
 
@@ -21,9 +20,9 @@ def image_callback(data):
     global bridge
     
     #the process of the data
-    # cv_img = bridge.imgmsg_to_cv2(data, "bgr8")
-    np_arr = np.fromstring(data.data, np.uint8)
-    cv_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    cv_img = bridge.imgmsg_to_cv2(data, "bgr8")
+    # np_arr = np.fromstring(data.data, np.uint8)
+    # cv_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
     hue_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2HSV)
     low_range1 = np.array([175, 200, 40])   #[0, 230, 80]
@@ -37,6 +36,7 @@ def image_callback(data):
 
     # 连通域分析, https://stackoverflow.com/questions/35854197/how-to-use-opencvs-connected-components-with-stats-in-python/35854198#35854198
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(dilated)
+    id = 0
     for i in range(1, num_labels):          # 0是背景
         left = stats[i, cv2.CC_STAT_LEFT]
         top  = stats[i, cv2.CC_STAT_TOP]
@@ -51,7 +51,9 @@ def image_callback(data):
             bbox.ymin = top
             bbox.xmax = left+w
             bbox.ymax = top+h
+            bbox.id = id
             img_pos.bounding_boxes.append(bbox)
+            id += 1
 
             cv2.rectangle(cv_img, (bbox.xmin, bbox.ymin), (bbox.xmax, bbox.ymax), (0, 255, 0), 2)
 
@@ -65,12 +67,12 @@ def image_callback(data):
 
 if __name__ == '__main__':
     global imag_pub
-    imag_pub = rospy.Publisher("tracker/pos_image", BoundingBoxes, queue_size=10)  # 发送图像位置
     rospy.init_node('iris_fpv_cam', anonymous=True)
 
     global bridge
     bridge = CvBridge()
-    # rospy.Subscriber('/camera/rgb/compressed', Image, image_callback)
-    rospy.Subscriber('/camera/rgb/compressed', CompressedImage, image_callback)
+    rospy.Subscriber('/camera/rgb', Image, image_callback)
+    # rospy.Subscriber('/camera/rgb/compressed', CompressedImage, image_callback)
+    imag_pub = rospy.Publisher("tracker/pos_image", BoundingBoxes, queue_size=10)  # 发送图像位置
 
     rospy.spin()

@@ -9,8 +9,7 @@ import json
 import threading
 import numpy as np
 
-from swarm_msgs.msg import Pipeline, Pipeunit
-from mavros_msgs.msg import State
+from mavros_msgs.msg import State, PositionTarget
 from mavros_msgs.srv import CommandBool, SetMode, CommandTOL
 from geometry_msgs.msg import PoseStamped, TwistStamped, Point32
 from std_msgs.msg import UInt64
@@ -27,7 +26,15 @@ class Px4Controller:
         self.start_point.pose.position.z = 4
         self.drone_name = drone_name
         self.rate = rospy.Rate(20)
+
+        self.is_initialize_pos = False
+        self.mav_yaw = 0
+        self.mav_pos = np.array([0., 0., 0.])
+        self.mav_R = np.identity(3)
+
         # mavros topics
+        self.local_pose_sub = rospy.Subscriber("mavros/local_position/pose", PoseStamped, self.local_pose_callback)
+        self.local_vel_pub =  rospy.Publisher('/mavros/setpoint_raw/local', PositionTarget, queue_size=10)
         self.vel_pub = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel', TwistStamped, queue_size=10)                     # 发布速度指令（重要）
         self.pos_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size=10)                        # 发布位置指令（初始化飞到厂房前使用）
         self.armService = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)                                              # 解锁服务
@@ -43,16 +50,28 @@ class Px4Controller:
             self.offboard_state = self.offboard()
             self.rate.sleep()
 
-        for _ in range(100):
-            self.pos_pub.publish(self.start_point)
-            self.rate.sleep()
+        self.takeoff()
 
-        self.start_point.pose.position.x = 10.5
-        self.start_point.pose.position.y = -7
-        self.start_point.pose.position.z = 2
-        for _ in range(300):
-            self.pos_pub.publish(self.start_point)
-            self.rate.sleep()
+        # self.start_point.pose.position.x = 10.5
+        # self.start_point.pose.position.y = -7
+        # self.start_point.pose.position.z = 2
+        # for _ in range(300):
+        #     self.pos_pub.publish(self.start_point)
+        #     self.rate.sleep()
+
+    # 无人机位置姿态回调函数
+    def local_pose_callback(self, msg):
+        if not self.is_initialize_pos:
+            self.mav_yaw_0 = self.mav_yaw
+        self.is_initialize_pos = True
+        self.mav_pos = np.array([msg.pose.position.x, msg.pose.position.y, msg.pose.position.z])
+        q0, q1, q2, q3 = msg.pose.orientation.w, msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z
+        self.mav_yaw = np.arctan2(2*(q0*q3 + q1*q2), 1-2*(q2*q2 + q3*q3))
+        self.mav_R = np.array([
+            [q0**2+q1**2-q2**2-q3**2, 2*(q1*q2-q0*q3), 2*(q1*q3+q0*q2)],
+            [2*(q1*q2+q0*q3), q0**2-q1**2+q2**2-q3**2, 2*(q2*q3-q0*q1)],
+            [2*(q1*q3-q0*q2), 2*(q2*q3+q0*q1), q0**2-q1**2-q2**2+q3**2]
+        ])
 
     # 悬停
     def idle(self):
@@ -87,12 +106,52 @@ class Px4Controller:
             return False
 
     # 起飞
-    def takeoff(self):
-        if self.takeoffService(altitude=3):
-            return True
-        else:
-            print("Vechile Takeoff failed")
-            return False
+    def takeoff(self, vz=0.8,h=1.8):
+        self.mav_yaw_0 = self.mav_yaw
+
+        self.moveByPosENU(U=h)
+        takeoff_done = False
+        while not takeoff_done:
+            self.moveByPosENU(U=h)
+            rospy.sleep(0.05)
+            # print("takeoff height:",{self.mav_pos[2]})
+            takeoff_done = (abs(self.mav_pos[2]- h) < 0.2)
+
+    def moveByPosENU(self, E=None, N=None, U=None, mav_yaw=None):
+        mav_yaw = mav_yaw if mav_yaw is not None else self.mav_yaw
+        E = E if E is not None else self.mav_pos[0]
+        N = N if N is not None else self.mav_pos[1]
+        U = U if U is not None else self.mav_pos[2]
+        command_vel = construct_postarget_ENU(E, N, U, mav_yaw)
+        self.local_vel_pub.publish(command_vel)
+    
+    
+def construct_postarget_ENU(E=0, N=0, U=0, yaw=0, yaw_rate = 0):
+    target_raw_pose = PositionTarget()
+    target_raw_pose.header.stamp = rospy.Time.now()
+    
+    '''
+    uint8 FRAME_LOCAL_NED = 1
+    uint8 FRAME_LOCAL_OFFSET_NED = 7
+    uint8 FRAME_BODY_NED = 8
+    uint8 FRAME_BODY_OFFSET_NED = 9
+
+    MAV_FRAME_BODY_FRD
+    '''
+
+    target_raw_pose.coordinate_frame = 1
+
+    target_raw_pose.position.x = E
+    target_raw_pose.position.y = N
+    target_raw_pose.position.z = U
+
+    target_raw_pose.type_mask = PositionTarget.IGNORE_VX + PositionTarget.IGNORE_VY + PositionTarget.IGNORE_VZ \
+                                + PositionTarget.IGNORE_AFX + PositionTarget.IGNORE_AFY + PositionTarget.IGNORE_AFZ \
+                                + PositionTarget.FORCE
+
+    target_raw_pose.yaw = yaw
+    target_raw_pose.yaw_rate = yaw_rate
+    return target_raw_pose
 
 
 if __name__ == '__main__':
