@@ -7,14 +7,11 @@ import rospy
 from geometry_msgs.msg import TwistStamped
 from swarm_msgs.msg import Action
 
-def spin():
-    rospy.spin()
 
 class Assemble:
 
-    def __init__(self, px):
+    def __init__(self, param_id):
         self.start_time = time.time()
-        self.px = px
         
         self.pipeline_cmd = TwistStamped()
         self.dj_cmd = TwistStamped()
@@ -25,6 +22,7 @@ class Assemble:
         self.DJ_cmd_sub = rospy.Subscriber('DJ_cmd', TwistStamped, self.DJ_cmd_callback)
         self.Obs_cmd_sub = rospy.Subscriber('Obs_cmd', TwistStamped, self.Obs_cmd_callback)
         self.Expect_action_sub = rospy.Subscriber('expect_action'+str(param_id), Action, self.Expect_action_callback)
+        self.vel_pub = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel', TwistStamped, queue_size=10)
 
     def Pipeline_cmd_callback(self, msg):
         self.pipeline_cmd = msg
@@ -61,35 +59,17 @@ class Assemble:
         # self.px.land()
 
     def begin_task(self):
-        print("=========================")
-        print("Taking off...")
-
-        self.px.takeoff_pos(h=1.5)
-
-        for circle_id in range(len(self.setpoints)):
-            # time.sleep(3)
-            print("=========================")
-            print("Now try to pass circle {}...".format(circle_id+1))
-            self.task_cross_circle(circle_id, mode="minsnap")
-            # self.task_cross_circle(circle_id, mode="moveToPosition")
-            # if self.is_calibration:
-            #     self.calibration_mavpos(circle_id)
-
-        print("=========================")
-        print("Planning to land point...")
-        self.px.planning(self.setpoint_land[0]+self.px.mav_pos0[0], self.setpoint_land[1]+self.px.mav_pos0[1], self.setpoint_land[2]+self.px.mav_pos0[2])
-        self.px.idle()
-        while self.px.trigger_land != 1:
-            time.sleep(0.02)
-
-        print("=========================")
-        print("Landing...")
-        # self.moveToPosition(
-        # self.setpoint_land[0], self.setpoint_land[1], self.setpoint_land[2])
-
+        rate = rospy.Rate(50)
+        while not rospy.is_shutdown():
+            if self.dj_cmd.dj == True:
+                self.vel_pub.publish(self.dj_cmd)
+            else:
+                self.vel_pub.publish(self.pipeline_cmd)
+            rate.sleep()
 
 if __name__=="__main__":
-    rospy.init_node('assemble', anonymous=True)
-    spin_thread = threading.Thread(target=spin)
-    spin_thread.start()
+    rospy.init_node("assemble", anonymous=True)
     param_id = rospy.get_param("~drone_id")
+
+    ass = Assemble(param_id)
+    ass.begin_task()

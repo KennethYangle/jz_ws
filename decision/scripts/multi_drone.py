@@ -94,9 +94,6 @@ class Px4Controller:
             print("Vechile Takeoff failed")
             return False
 
-def spin():
-    rospy.spin()
-
 
 if __name__ == '__main__':
     # 载入剧本文件
@@ -107,8 +104,6 @@ if __name__ == '__main__':
 
     # ROS初始化，从launch文件获取参数
     rospy.init_node('decision_node', anonymous=True)
-    spin_thread = threading.Thread(target=spin)
-    spin_thread.start()
     param_id = rospy.get_param("~drone_id")
     drone_name = "drone_{}".format(param_id)
 
@@ -126,4 +121,3 @@ if __name__ == '__main__':
     # 待添加 -----------------------------------------
     # 绕飞、集群飞行的路径点发布
 
-    rospy.spin()

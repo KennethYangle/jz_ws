@@ -52,14 +52,12 @@ find_package(catkin REQUIRED COMPONENTS
 # Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  BBox2d.msg
-  BBox3d.msg
-  Object.msg
-  Detector.msg
-  Flowpixel.msg
-  Flow.msg
+  Action.msg
   Pipeunit.msg
   Pipeline.msg
+  Waypoint.msg
+  BoundingBox.msg
+  BoundingBoxes.msg
 )
 
 ## Generate services in the 'srv' folder

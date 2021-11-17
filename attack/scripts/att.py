@@ -10,6 +10,7 @@ import time
 import threading
 import Tkinter
 from swarm_msgs.msg import Action
+from swarm_msgs.msg import BoundingBox, BoundingBoxes
 from geometry_msgs.msg import *
 from std_msgs.msg import Float32MultiArray
 from std_srvs.srv import Empty
@@ -54,20 +55,26 @@ def mav_vel_cb(msg):
     mav_vel = np.array([msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z])
 
 def pos_image_cb(msg):
-    global is_initialize_img, pos_i, image_failed_cnt
-    is_initialize_img = True
+    global pos_i, image_failed_cnt, dj_action
     print("msg_data: {}".format(msg.data))
+    x, y = 0, 0
+    if dj_action.dj == True:
+        expect_id = dj_action.id
+        for bbox in msg.bounding_boxes:
+            if bbox.id == expect_id:
+                x = (bbox.xmin + bbox.xmax) / 2
+                y = (bbox.ymin + bbox.ymax) / 2
 
     # 短时丢失还保持上一次的值。超时则丢失目标
-    if msg.height <= 0:
+    if x <= 0:
         image_failed_cnt += 1
     else:
         image_failed_cnt = 0
     if image_failed_cnt <= 20 and image_failed_cnt > 0:
         pass
     else:
-        pos_i[0] = msg.width
-        pos_i[1] = msg.height
+        pos_i[0] = x
+        pos_i[1] = y
     print("pos_i: {}".format(pos_i))
 
 def expect_action_cb(msg):
@@ -97,7 +104,7 @@ if __name__=="__main__":
 
     rospy.Subscriber("mavros/local_position/pose", PoseStamped, mav_pose_cb)
     rospy.Subscriber("mavros/local_position/velocity_local", TwistStamped, mav_vel_cb)
-    rospy.Subscriber("tracker/pos_image", Image, pos_image_cb)
+    rospy.Subscriber("tracker/pos_image", BoundingBoxes, pos_image_cb)
     rospy.Subscriber('expect_action'+str(param_id), Action, expect_action_cb)
 
     local_vel_pub = rospy.Publisher('DJ_cmd', TwistStamped, queue_size=10)
@@ -105,6 +112,7 @@ if __name__=="__main__":
 
 
     # start
+    rate = rospy.Rate(50)
     while not rospy.is_shutdown():
         print("time: {}".format(rospy.Time.now().to_sec() - last_request.to_sec()))
         pos_info = {"mav_pos": mav_pos, "mav_vel": mav_vel, "mav_R": mav_R}
