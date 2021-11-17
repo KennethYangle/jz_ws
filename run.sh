@@ -4,7 +4,7 @@
 
 # 获取飞机ID，设置总飞机数
 MAVID=`expr ${HOSTNAME:4:2} + 0`
-MAVNUM=1
+MAVNUM=3
 
 echo "this MAV id :${MAVID}"
 
@@ -28,15 +28,15 @@ rosrun detection img_pub.py  & PID4=$!
 sleep 3s
 
 # 控制汇总
-roslaunch offboard_pkg assemble.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID7=$!
+roslaunch offboard_pkg assemble.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID5=$!
 sleep 5s
 
 # 决策相关
-roslaunch decision drone.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID5=$!
+roslaunch decision drone.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID6=$!
 sleep 5s
 
 # 打击
-roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID6=$!
+roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID7=$!
 sleep 5s
 
 

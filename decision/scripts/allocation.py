@@ -28,9 +28,9 @@ class Allocation:
         self.mav_pos_subs = [None for i in range(self.drone_num)]
         self.pos_image_subs = [None for i in range(self.drone_num)]
         for i in range(self.drone_num):
-            self.mav_pos_subs[i-1] = rospy.Subscriber("drone_{}/mavros/local_position/pose_cor".format(i+1), PoseStamped, self.mav_pose_cb, i)
+            self.mav_pos_subs[i] = rospy.Subscriber("drone_{}/mavros/local_position/pose_cor".format(i+1), PoseStamped, self.mav_pose_cb, i)
         for i in range(self.drone_num):
-            self.pos_image_subs = rospy.Subscriber("drone_{}/tracker/pos_image".format(i+1), BoundingBoxes, self.pos_image_cb, i)
+            self.pos_image_subs[i] = rospy.Subscriber("drone_{}/tracker/pos_image".format(i+1), BoundingBoxes, self.pos_image_cb, i)
         self.Expect_action_pub = rospy.Publisher('expect_action'+str(self.drone_id), Action, queue_size=10)
 
 
@@ -49,7 +49,7 @@ class Allocation:
 
     def pos_image_cb(self, msg, args):
         id = args
-        drone_name = "drone_{}".format(id)
+        drone_name = "drone_{}".format(id+1)
         self.is_initialized_imges[id] = True
 
         objects = dict()
