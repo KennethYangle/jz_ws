@@ -3,7 +3,7 @@
 
 import numpy as np
 import os, json
-import rospy
+import rospy, rospkg
 from geometry_msgs.msg import PoseStamped, TwistStamped
 from std_msgs.msg import Float32MultiArray
 from sensor_msgs.msg import Image
@@ -14,6 +14,7 @@ from swarm_msgs.msg import BoundingBox, BoundingBoxes
 
 
 def image_callback(data):
+    global is_show_rgb, is_show_hsv
     img_pos = BoundingBoxes()
     # define picture to_down' coefficient of ratio
     img_pos.header.stamp = rospy.Time.now()
@@ -44,7 +45,7 @@ def image_callback(data):
         h = stats[i, cv2.CC_STAT_HEIGHT]
         area = stats[i, cv2.CC_STAT_AREA]
 
-        if area > 20:
+        if area > 50:
             bbox = BoundingBox()
             bbox.probability = 1
             bbox.xmin = left
@@ -58,14 +59,24 @@ def image_callback(data):
             cv2.rectangle(cv_img, (bbox.xmin, bbox.ymin), (bbox.xmax, bbox.ymax), (0, 255, 0), 2)
 
     # 是否显示图像
-    cv2.imshow("img", cv_img)
-    cv2.imshow("hsv", dilated)
+    if is_show_rgb:
+        cv2.imshow("img", cv_img)
+    if is_show_hsv:
+        cv2.imshow("hsv", dilated)
     cv2.waitKey(1)
 
     imag_pub.publish(img_pos)
 
 
 if __name__ == '__main__':
+    src_path = os.path.join(rospkg.RosPack().get_path("offboard_pkg"), "..")
+    setting_file = open(os.path.join(src_path, "settings.json"))
+    setting = json.load(setting_file)
+    print(json.dumps(setting, indent=4))
+
+    is_show_rgb = setting["Debug"]["is_show_rgb"]
+    is_show_hsv = setting["Debug"]["is_show_hsv"]
+    
     global imag_pub
     rospy.init_node('iris_fpv_cam', anonymous=True)
 

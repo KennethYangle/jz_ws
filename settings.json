@@ -2,6 +2,10 @@
     "Docs": "settings.md",
     "MODE": "Simulation",
     "IsRC": false,
+    "Debug": {
+        "is_show_rgb": false,
+        "is_show_hsv": false
+    },
     "RealFlight": {
         "WIDTH": 360,
         "HEIGHT": 640,

@@ -19,6 +19,7 @@ sleep 5s
 
 # DDS
 roslaunch bs_assis bs_dds.launch  mav_id:=${MAVID} mav_num:=${MAVNUM} & PID2=$!
+roslaunch bs_assis bs_mavros.launch  mav_id:=${MAVID} & PID6=$!
 sleep 5s
 
 # 控制汇总
@@ -35,5 +36,5 @@ sleep 5s
 
 
 wait
-kill -9 PID0 PID1 PID2 PID3 PID4 PID5
+kill -9 PID0 PID1 PID2 PID3 PID4 PID5 PID6
 exit

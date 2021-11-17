@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geometry_msgs
+  swarm_msgs
 )
 
 if(NOT fastcdr_FOUND)
@@ -126,6 +128,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  "dds_gen"
 )
 
 ## Declare a C++ library
@@ -217,14 +220,13 @@ include_directories(
 
 
 
-message(STATUS "Configuring HelloWorld publisher/subscriber example...")
-file(GLOB DDS_SOURCES_CXX "src/*.cxx")
+file(GLOB DDS_GENERATE_CXX "dds_gen/*.cxx")
+file(GLOB SOURCE_CPP "src/*.cpp")
+file(GLOB SOURCE_HPP "src/*.hpp")
 
-#add_executable(Example_PS src/Example_PS.cpp ${DDS_SOURCES_CXX})
-#target_link_libraries(Example_PS fastrtps fastcdr)
 
-add_executable(mavpv_node src/mavpv_node.cpp ${DDS_SOURCES_CXX})
-target_link_libraries(mavpv_node ${catkin_LIBRARIES} fastrtps fastcdr)
+add_executable(dds_node ${SOURCE_CPP} ${SOURCE_HPP} ${DDS_GENERATE_CXX})
+target_link_libraries(dds_node ${catkin_LIBRARIES} fastrtps fastcdr)
 
 
 
