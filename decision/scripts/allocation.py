@@ -18,6 +18,7 @@ class Allocation:
         self.mav_R = np.identity(3)
         self.dj_action = Action()
         self.objects = dict()
+        self.cnt_loss = 0
 
         self.mav_pos_sub = rospy.Subscriber("mavros/local_position/pose_cor", PoseStamped, self.mav_pose_cb)
         self.pos_image_sub = rospy.Subscriber("tracker/pos_image", BoundingBoxes, self.pos_image_cb)
@@ -33,6 +34,7 @@ class Allocation:
                         [2*(q1*q3-q0*q2), 2*(q2*q3+q0*q1), q0**2-q1**2-q2**2+q3**2]])
 
     def pos_image_cb(self, msg):
+        print(self.cnt_loss)
         self.objects = dict()
         for bbox in msg.bounding_boxes:
             x = (bbox.xmin + bbox.xmax) / 2
@@ -41,9 +43,12 @@ class Allocation:
         if bool(self.objects):
             self.dj_action.dj = True
             self.dj_action.id = 0
+            self.cnt_loss = 0
         else:
-            self.dj_action.dj = False
-            self.dj_action.id = 0
+            self.cnt_loss += 1
+            if self.cnt_loss >= 50:
+                self.dj_action.dj = False
+                self.dj_action.id = 0
 
 
     def begin_task(self):
