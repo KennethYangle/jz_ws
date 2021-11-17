@@ -34,7 +34,7 @@ class Allocation:
                         [2*(q1*q3-q0*q2), 2*(q2*q3+q0*q1), q0**2-q1**2-q2**2+q3**2]])
 
     def pos_image_cb(self, msg):
-        print(self.cnt_loss)
+        # print(self.cnt_loss)
         self.objects = dict()
         for bbox in msg.bounding_boxes:
             x = (bbox.xmin + bbox.xmax) / 2

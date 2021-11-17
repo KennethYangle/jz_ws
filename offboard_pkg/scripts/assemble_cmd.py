@@ -47,7 +47,7 @@ class Px4Controller:
             self.offboard_state = self.offboard()
             self.rate.sleep()
 
-        self.takeoff()
+        self.takeoff(h=3)
 
         # if self.drone_id == 1:
         #     self.start_point.pose.position.x = 0
@@ -119,6 +119,9 @@ class Px4Controller:
         takeoff_done = False
         while not takeoff_done:
             self.moveByPosENU(U=h)
+            # command = TwistStamped()
+            # command.twist.linear.z = vz
+            # self.vel_pub.publish(command)
             rospy.sleep(0.05)
             # print("takeoff height:",{self.mav_pos[2]})
             takeoff_done = (abs(self.mav_pos[2]- h) < 0.2)

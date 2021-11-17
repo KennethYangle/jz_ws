@@ -63,7 +63,7 @@ def pos_image_cb(msg):
                 x = (bbox.xmin + bbox.xmax) / 2
                 y = (bbox.ymin + bbox.ymax) / 2
 
-    # 短时丢失还保持上一次的值。超时则丢失目标
+    # 滤波。短时丢失还保持上一次的值，超时则丢失目标
     if x <= 0:
         image_failed_cnt += 1
     else:
