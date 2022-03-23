@@ -7,6 +7,7 @@ import os
 import json
 import rospy, rospkg
 import cv2
+from recursive_hungarian import RHA2
 from geometry_msgs.msg import TwistStamped, PoseStamped
 from swarm_msgs.msg import Action, BoundingBoxes
 
@@ -16,6 +17,7 @@ class Allocation:
     def __init__(self, drone_id, drone_num, params):
         self.drone_id = drone_id
         self.drone_num = drone_num
+        self.drone_name = "drone_{}".format(self.drone_id)
         self.R_cb = np.array([[0,0,1], [-1,0,0], [0,-1,0]])
         self.T_ce_dic = dict()
         self.f = params["F"]
@@ -192,8 +194,41 @@ class Allocation:
         self.reconstruction()
 
         # 目标分配
+        mav_positions = None
+        mav_pos_order = dict()
+        cnt_order = 0
+        for name, pos in self.mav_pos_dic.items():
+            if mav_positions is None:
+                mav_positions = pos
+            else:
+                mav_positions = np.vstack((mav_positions, pos))
+            mav_pos_order[name] = cnt_order
+            cnt_order += 1
+        
+        target_positions = None
+        for fe_id, fe_info in self.features_info.items():
+            if "pos_3d" in fe_info.keys():
+                if target_positions is None:
+                    target_positions = fe_info["pos_3d"]
+                else:
+                    target_positions = np.vstack((target_positions, fe_info["pos_3d"]))
+        
+        r = RHA2(mav_positions, target_positions)
+        task = r.deal()
+        print("task: {}".format(task[1]))       # 首个目标记录在task[1]
 
         # 写入dj_action
+        this_mav_pos_order = mav_pos_order[self.drone_name]
+        this_target_pos = np.array(task[1][this_mav_pos_order])
+        for fe_id, fe_info in self.features_info.items():
+            pos_3d = fe_info.get('pos_3d', np.array([1e3, 1e3, 1e3]))
+            if np.linalg.norm(pos_3d - this_target_pos) < 1e-3:
+                this_target_id = fe_id
+        this_mav_feature_id = self.features_info[this_target_id][self.drone_name]
+
+        self.dj_action.dj = True
+        self.dj_action.id = this_mav_feature_id
+        print("dj_action: {}".format(self.dj_action))
 
         # publish dj_action
         while not rospy.is_shutdown():

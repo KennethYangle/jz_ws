@@ -1,8 +1,12 @@
+#!/usr/bin/env python
+# coding=utf-8
+
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 
 # Recursive Hungarian Algorithm for Dynamic Environments
+# 输入：无人机位置、目标位置，均为二维numpy
 class RHA2:
     def __init__(self, agent_pos, task_pos):
         self.agent_pos = agent_pos

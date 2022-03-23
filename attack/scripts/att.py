@@ -62,6 +62,12 @@ def pos_image_cb(msg):
             if bbox.id == expect_id:
                 x = (bbox.xmin + bbox.xmax) / 2
                 y = (bbox.ymin + bbox.ymax) / 2
+        # 只有一个？打他就对了
+        if len(msg.bounding_boxes) == 1:
+            bbox = msg.bounding_boxes[0]
+            x = (bbox.xmin + bbox.xmax) / 2
+            y = (bbox.ymin + bbox.ymax) / 2
+
 
     # 滤波。短时丢失还保持上一次的值，超时则丢失目标
     if x <= 0:

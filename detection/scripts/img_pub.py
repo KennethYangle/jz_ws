@@ -65,6 +65,13 @@ def image_callback(data):
         cv2.imshow("hsv", dilated)
     cv2.waitKey(1)
 
+    # 按横坐标排序
+    id = 0
+    img_pos.bounding_boxes.sort(key=lambda x: (x.xmin+x.xmax)/2)
+    for bbox in img_pos.bounding_boxes:
+        bbox.id = id
+        id += 1
+    
     imag_pub.publish(img_pos)
 
 
