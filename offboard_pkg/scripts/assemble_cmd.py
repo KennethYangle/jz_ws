@@ -49,6 +49,7 @@ class Px4Controller:
 
         self.takeoff(h=3)
 
+        # # test for freeflight.py
         # if self.drone_id == 1:
         #     self.start_point.pose.position.x = 0
         #     self.start_point.pose.position.y = 0
@@ -61,9 +62,13 @@ class Px4Controller:
         #     self.start_point.pose.position.x = 0
         #     self.start_point.pose.position.y = 4
         #     self.start_point.pose.position.z = 2
-        # for _ in range(300):
-        #     self.pos_pub.publish(self.start_point)
-        #     self.rate.sleep()
+        # 32s
+        self.start_point.pose.position.x = 1
+        self.start_point.pose.position.y = -12
+        self.start_point.pose.position.z = 2.5
+        for _ in range(300):
+            self.pos_pub.publish(self.start_point)
+            self.rate.sleep()
 
     # 无人机位置姿态回调函数
     def local_pose_callback(self, msg):

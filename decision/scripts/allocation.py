@@ -24,7 +24,7 @@ class Allocation:
         self.u0 = params["WIDTH"] / 2
         self.v0 = params["HEIGHT"] / 2
         self.K = np.array([[self.f, 0, self.u0], [0, self.f, self.v0], [0, 0, 1]])
-        self.th_Sam = 5e-4  # 太小会多判出目标；太大会合并目标，最好要base飞机看到所有目标，能保证的话取大一些更好
+        self.th_Sam = 1e-3  # 太小会多判出目标；太大会合并目标，最好要base飞机看到所有目标，能保证的话取大一些更好
         self.start_time = time.time()
         
         # 依次储存位置、R、是否初始化
@@ -182,6 +182,13 @@ class Allocation:
             is_ready = self.check_ready()
             rate.sleep()
 
+        # 等待到达（应由决策触发）
+        des_pos = np.array([1,-12,2.5])
+        dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
+        while dis > 0.05:
+            dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
+            rate.sleep()
+
         # debug
         print("mav_pos_dic: {}".format(self.mav_pos_dic))
         print("mav_R_dic: {}".format(self.mav_R_dic))
@@ -194,25 +201,23 @@ class Allocation:
         self.reconstruction()
 
         # 目标分配
-        mav_positions = None
+        mav_positions = np.zeros((1,3))
         mav_pos_order = dict()
         cnt_order = 0
         for name, pos in self.mav_pos_dic.items():
-            if mav_positions is None:
-                mav_positions = pos
-            else:
-                mav_positions = np.vstack((mav_positions, pos))
+            mav_positions = np.vstack((mav_positions, pos))
             mav_pos_order[name] = cnt_order
             cnt_order += 1
-        
-        target_positions = None
+        mav_positions = mav_positions[1:]
+
+        target_positions = np.zeros((1,3))
         for fe_id, fe_info in self.features_info.items():
             if "pos_3d" in fe_info.keys():
-                if target_positions is None:
-                    target_positions = fe_info["pos_3d"]
-                else:
-                    target_positions = np.vstack((target_positions, fe_info["pos_3d"]))
-        
+                target_positions = np.vstack((target_positions, fe_info["pos_3d"]))
+        target_positions = target_positions[1:]
+
+        print("mav_positions: {}".format(mav_positions))
+        print("target_positions: {}".format(target_positions))
         r = RHA2(mav_positions, target_positions)
         task = r.deal()
         print("task: {}".format(task[1]))       # 首个目标记录在task[1]
