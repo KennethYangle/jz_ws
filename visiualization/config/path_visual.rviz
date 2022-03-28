@@ -6,7 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /drone11
         - /Marker2
+        - /Marker3
       Splitter Ratio: 0.5
     Tree Height: 753
   - Class: rviz/Selection
@@ -39,7 +41,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: false
+      Enabled: true
       Line Style:
         Line Width: 0.029999999329447746
         Value: Lines
@@ -52,13 +54,13 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /visualization/path
       Name: Path point
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 0.699999988079071
@@ -76,7 +78,7 @@ Visualization Manager:
       Marker Topic: /visualization/generator
       Name: Generator curve
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -84,7 +86,7 @@ Visualization Manager:
       Marker Topic: /visualization/cuv
       Name: Marker
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -92,7 +94,7 @@ Visualization Manager:
       Marker Topic: /visualization/right_curve
       Name: Right curve
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -100,15 +102,31 @@ Visualization Manager:
       Marker Topic: /visualization/left_curve
       Name: left curve
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /visualization/drone1
+      Name: drone1
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /visualization/drone2
       Name: Marker
       Namespaces:
-        points_and_lines: true
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /visualization/drone3
+      Name: Marker
+      Namespaces:
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -139,7 +157,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 147.8480987548828
+      Distance: 95.07504272460938
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
