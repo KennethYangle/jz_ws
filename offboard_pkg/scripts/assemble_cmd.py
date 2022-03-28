@@ -62,12 +62,22 @@ class Px4Controller:
         #     self.start_point.pose.position.x = 0
         #     self.start_point.pose.position.y = 4
         #     self.start_point.pose.position.z = 2
-        # 32s
-        self.start_point.pose.position.x = 1
-        self.start_point.pose.position.y = -12
-        self.start_point.pose.position.z = 2.5
-        for _ in range(300):
+        # # 32s
+        # self.start_point.pose.position.x = 1
+        # self.start_point.pose.position.y = -12
+        # self.start_point.pose.position.z = 2.5
+        # for _ in range(300):
+        #     self.pos_pub.publish(self.start_point)
+        #     self.rate.sleep()
+        # test tube
+        des_pos = np.array([46.55, 36.75, 1.0])
+        self.start_point.pose.position.x = des_pos[0]
+        self.start_point.pose.position.y = des_pos[1]
+        self.start_point.pose.position.z = des_pos[2]
+        dis = np.linalg.norm(des_pos-self.mav_pos)
+        while dis > 0.5:
             self.pos_pub.publish(self.start_point)
+            dis = np.linalg.norm(des_pos-self.mav_pos)
             self.rate.sleep()
 
     # 无人机位置姿态回调函数

@@ -20,6 +20,9 @@ namespace Tube_planning
         right_curve_sub = nh.subscribe("/tube/tube_right", 10, &Visiualization::rightCallback, this);
         left_curve_sub = nh.subscribe("/tube/tube_left", 10, &Visiualization::leftCallback, this);
 
+        /* sub drone point */
+        drone1_sub = nh.subscribe("/drone_1/mavros/local_position/pose_cor", 10, &Visiualization::drone1Callback, this);
+  
         // pipe_sub = nh.subscribe("/tube/right_dis", 10, &Visiualization::pipeCallback, this);
 
         path_pub = nh.advertise<visualization_msgs::Marker>("/visualization/path", 10);
@@ -27,6 +30,32 @@ namespace Tube_planning
         cuv_pub = nh.advertise<visualization_msgs::Marker>("/visualization/cuv", 10);
         right_curve_pub = nh.advertise<visualization_msgs::Marker>("/visualization/right_curve", 10);
         left_curve_pub = nh.advertise<visualization_msgs::Marker>("/visualization/left_curve", 10);
+        drone1_pub = nh.advertise<visualization_msgs::Marker>("/visualization/drone1", 10);
+
+
+    }
+
+    void Visiualization::drone1Callback(const geometry_msgs::PoseStamped::ConstPtr &msg)
+    {
+        visualization_msgs::Marker marker;
+        marker.header.stamp = ros::Time::now();
+        marker.header.frame_id = "map";
+        marker.ns = "points_and_lines";
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.id = 5;
+        marker.type = visualization_msgs::Marker::CUBE;
+        marker.scale.x = 1;
+        marker.scale.y = 1;
+        marker.scale.z = 1;
+        marker.color.r = 1.0f;
+        // marker.color.b = 1.0f;
+        marker.color.a = 1.0;
+
+        marker.pose = msg->pose;//Pose
+        std::cout << "msg->pose :" << msg->pose << std::endl;
+
+        drone1_pub.publish(marker);
+
 
     }
 

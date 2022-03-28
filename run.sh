@@ -39,7 +39,14 @@ sleep 5s
 roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID7=$!
 sleep 5s
 
+# 管道生成
+roslaunch tube_planning tube_plan.launch & PID8=$!
+sleep 5s
+
+# 管道飞行
+roslaunch tube_control tube.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID9=$!
+sleep 5s
 
 wait
-kill -9 PID0 PID1 PID2 PID3 PID4 PID5 PID6 PID7
+kill -9 PID0 PID1 PID2 PID3 PID4 PID5 PID6 PID7 PID8 PID9
 exit
