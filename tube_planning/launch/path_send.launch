@@ -1,0 +1,17 @@
+<launch>
+    <!-- trajectory publisher -->
+    <node pkg="tube_planning" name="talker" type="talker" output="screen">
+        <remap from="/paths" to="/generator_curve/paths"/>
+    </node>
+    
+      <!-- gridmap publisher -->
+    <node pkg="tube_planning" name="gridMap" type="gridMap" output="screen">
+    </node>
+
+    <node pkg="visiualization" name="visiual_node" type="visiual_node" output="screen">
+    </node>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d /home/mao/code/virtual_tube_planning/src/visiualization/config/path_visual.rviz" required="true" />
+
+
+  </launch>

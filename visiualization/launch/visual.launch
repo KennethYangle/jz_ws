@@ -1,0 +1,7 @@
+<launch>
+
+    <node pkg="visiualization" name="visiual_node" type="visiual_node" output="screen">
+    </node>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d /home/nvidia/buaa_ws/src/visiualization/config/path_visual.rviz" required="true" />
+</launch>

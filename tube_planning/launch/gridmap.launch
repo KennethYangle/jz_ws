@@ -1,0 +1,9 @@
+<launch>
+    <!-- gridmap publisher -->
+    <node pkg="tube_planning" name="gridMap" type="gridMap" output="screen">
+      <!-- <param name="map/info/resolution"  value="$(arg resolution)" type="float"/>
+      <param name="map/info/width"  value="$(arg width)" type="int"/>
+      <param name="map/info/height"  value="$(arg height)" type="int"/> -->
+    </node>
+
+  </launch>
