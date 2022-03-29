@@ -15,17 +15,17 @@
   <arg name="height" value="991"/>
 
     <!-- trajectory publisher -->
-    <node pkg="tube_planning" name="talker" type="talker" output="screen">
+    <node pkg="tube_planning" name="talker" type="talker">
       <remap from="/paths" to="/generator_curve/paths"/>
     </node>
   
     <!-- gridmap publisher -->
-    <node pkg="tube_planning" name="gridMap" type="gridMap" output="screen">
+    <node pkg="tube_planning" name="gridMap" type="gridMap">
       <!-- <param name="map/info/resolution"  value="$(arg resolution)" type="float"/> -->
     </node>
   
     <!-- 管道规划-->
-    <node pkg="tube_planning" name="tube_plan_node" type="tube_plan_node" output="screen">
+    <node pkg="tube_planning" name="tube_plan_node" type="tube_plan_node">
       <param name="virtual_tube/max_radius"  value="$(arg max_radius)" type="double"/>
       <param name="generator_curve/total_time" value="$(arg total_time)" type="double"/>
       <param name="generator_curve/n_order" value="$(arg n_order)" type="int"/>

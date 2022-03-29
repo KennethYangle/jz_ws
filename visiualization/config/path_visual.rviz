@@ -6,9 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /drone11
-        - /Marker2
-        - /Marker3
+        - /drone21
+        - /drone31
       Splitter Ratio: 0.5
     Tree Height: 753
   - Class: rviz/Selection
@@ -60,7 +59,7 @@ Visualization Manager:
       Marker Topic: /visualization/path
       Name: Path point
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Alpha: 0.699999988079071
@@ -78,7 +77,7 @@ Visualization Manager:
       Marker Topic: /visualization/generator
       Name: Generator curve
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -86,7 +85,7 @@ Visualization Manager:
       Marker Topic: /visualization/cuv
       Name: Marker
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -94,7 +93,7 @@ Visualization Manager:
       Marker Topic: /visualization/right_curve
       Name: Right curve
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -102,7 +101,7 @@ Visualization Manager:
       Marker Topic: /visualization/left_curve
       Name: left curve
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -110,23 +109,23 @@ Visualization Manager:
       Marker Topic: /visualization/drone1
       Name: drone1
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /visualization/drone2
-      Name: Marker
+      Name: drone2
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /visualization/drone3
-      Name: Marker
+      Name: drone3
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -157,25 +156,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 95.07504272460938
+      Distance: 116.27803039550781
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 43.48388671875
-        Y: 34.50706100463867
-        Z: 1.1140040442114696e-5
+        X: 20.726428985595703
+        Y: 44.98794937133789
+        Z: -1.0820539500855375e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: -1.5697963237762451
+      Pitch: 1.519796371459961
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 1.6053977012634277
+      Yaw: 3.1154048442840576
     Saved: ~
 Window Geometry:
   Displays:

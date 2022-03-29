@@ -75,6 +75,8 @@ class FreeFlight:
         # parameters
         self.rs = 0.6
         self.ra = 2.0
+        self.rt1 = 0.3
+        self.rt2 = 0.6
         self.vm = 2.0
         self.k1 = 1.0
         self.k2 = 50.0
@@ -90,12 +92,15 @@ class FreeFlight:
         for i in range(self.drone_num):
             # attractive potential
 
-            dis_middle_min = 10 ** 8
+            self.middle_locate = 0
+
+            dis_middle_min = 1e8
             for k in range(np.size(self.swarm[i].tube_middle,0)):
-                relaive_middle = self.swarm[i].ksi[[0,1]] - np.array(self.swarm[i].tube_middle[k][0],self.swarm[i].tube_middle[k][1])
+                relaive_middle = np.array([self.swarm[i].ksi[0],self.swarm[i].ksi[1]]) - np.array([self.swarm[i].tube_middle[k][0],self.swarm[i].tube_middle[k][1]])
                 dis_middle = np.linalg.norm(relaive_middle)
                 if dis_middle < dis_middle_min:
                     self.middle_locate = k
+                    dis_middle_min = dis_middle
 
             rot = np.array([[0.0,-1.0],[1.0,0.0]])
             right_left = self.swarm[i].tube_right[self.middle_locate] - self.swarm[i].tube_left[self.middle_locate]
@@ -105,6 +110,7 @@ class FreeFlight:
             self.swarm[i].Vline[[0,1]] = self.sat(self.k1 * self.vm * tc, self.vm)
 
             # repulsive potentials
+
             self.swarm[i].Vcollision = np.array([0.0, 0.0, 0.0])
             for j in range(self.drone_num):
                 if j == i: continue
@@ -116,16 +122,20 @@ class FreeFlight:
             mksii = 0.5 * (self.swarm[i].tube_right[self.middle_locate] + self.swarm[i].tube_left[self.middle_locate])
             rtksii = 0.5 * np.linalg.norm(right_left)
             dti = rtksii - np.linalg.norm(self.swarm[i].ksi[[0,1]] - mksii)
-            ci = -1 * self.k3 * self.dmysigma2(dti,self.rs,self.ra,0.0) * (self.swarm[i].ksi[[0,1]] - mksii) / np.linalg.norm(self.swarm[i].ksi[[0,1]] - mksii)
-            Pt = np.array([[1.0,0.0],[0.0,1.0]]) - np.matmul(tc,tc.T)
-            self.swarm[i].Vtube[[0,1]] = np.matmul(Pt,ci)
+            ci = -1 * self.k3 * self.dmysigma2(dti,self.rt1,self.rt2,0.0) * (self.swarm[i].ksi[[0,1]] - mksii) / np.linalg.norm(self.swarm[i].ksi[[0,1]] - mksii)
+            # Pt = np.array([[1.0,0.0],[0.0,1.0]]) - np.matmul(tc,tc.T)
+            # self.swarm[i].Vtube[[0,1]] = np.matmul(Pt,ci)
+            self.swarm[i].Vtube[[0,1]] = ci
+
+
 
             height_desire = self.swarm[i].tube_middle[self.middle_locate][2]
             self.swarm[i].Vheight[2] = self.kh * (height_desire-self.swarm[i].mav_pos[2])
 
             commands.append( (self.sat(self.swarm[i].Vline + self.swarm[i].Vcollision + self.swarm[i].Vtube + self.swarm[i].Vheight, self.vm)).tolist() )
-        
-            print(self.swarm[i].Vheight)
+
+            # if i == 2:
+            #     print("Vtube:", self.swarm[i].Vtube)
 
         return commands
 
@@ -146,7 +156,7 @@ class FreeFlight:
 
     def dmysigma2(self, x, d1, d2, em):
         if x <= d1:
-            return 0.0
+            return 1.0
         elif x <= d2 and x > d1:
             A = -(d2 * em - d1 * em + 2) / (d1 - d2) ** 3
             B = (-em * d1 **2 - em * d1 *d2 + 3 * d1 + 2 * em * d2 ** 2 + 3 * d2) / (d1 - d2) ** 3

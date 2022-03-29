@@ -56,7 +56,7 @@ namespace Tube_planning
         marker.color.a = 1.0;
 
         marker.pose = msg->pose;//Pose
-        std::cout << "msg->pose :" << msg->pose << std::endl;
+        // std::cout << "msg->pose :" << msg->pose << std::endl;
 
         drone3_pub.publish(marker);
     }
