@@ -15,15 +15,15 @@
   <arg name="height" value="30"/>
   
   <!-- trajectory publisher -->
-  <node pkg="tube_planning" name="talker" type="talker" output="screen">
+  <!-- <node pkg="tube_planning" name="talker" type="talker" output="screen">
     <remap from="/paths" to="/generator_curve/paths"/>
-  </node>
+  </node> -->
 
   <!-- gridmap publisher -->
-  <node pkg="tube_planning" name="gridMap" type="gridMap" output="screen">
+  <!-- <node pkg="tube_planning" name="gridMap" type="gridMap" output="screen"> -->
     <!-- <param name="map/info/resolution"  value="$(arg resolution)" type="float"/> -->
    
-  </node>
+  <!-- </node> -->
 
   <!-- 管道规划-->
   <node pkg="tube_planning" name="tube_plan_node" type="tube_plan_node" output="screen">

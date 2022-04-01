@@ -4,12 +4,22 @@
 #include <iostream>
 #include "visualization_msgs/Marker.h"
 #include "swarm_msgs/Pipeline.h"
+#include "nav_msgs/OccupancyGrid.h"
+#include <Eigen/Eigen>
 
 namespace Tube_planning
 {
     class Visiualization
     {
     private:
+        struct GridMap
+        {
+            float resolution;
+            int width;
+            int height;
+            Eigen::MatrixXi data;
+        };
+        GridMap gridmap;
         
         
         
@@ -18,12 +28,16 @@ namespace Tube_planning
         ros::Subscriber path_sub, generator_sub, cuv_sub, pipe_sub;
         ros::Subscriber right_curve_sub, left_curve_sub;
         ros::Subscriber drone1_sub, drone2_sub, drone3_sub;
+        ros::Subscriber nk_map_sub;
 
         ros::Publisher path_pub, generator_pub, cuv_pub, right_curve_pub, left_curve_pub;
         ros::Publisher drone1_pub, drone2_pub, drone3_pub;
+        ros::Publisher nk_map_pub;
+
         void pathCallback(const nav_msgs::Path::ConstPtr &msg);
         void genCallback(const nav_msgs::Path::ConstPtr &msg);
         void cuvCallback(const nav_msgs::Path::ConstPtr &msg);
+        void nankaiCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
         // void pipeCallback(const swarm_msgs::Pipeline &msg);
         void rightCallback(const nav_msgs::Path::ConstPtr &msg);
         void leftCallback(const nav_msgs::Path::ConstPtr &msg);

@@ -46,8 +46,10 @@ namespace Tube_planning
         nh.param("map/info/width", gridmap.width, 37);
         nh.param("map/info/height", gridmap.height, 30);
 
-        gridmap_sub = nh.subscribe("/Map/OccupancyGrid", 10, &GeneratorFist::gridmapCallback, this);
-        path_sub = nh.subscribe("/generator_curve/paths", 10, &GeneratorFist::pathCallback, this);
+        // gridmap_sub = nh.subscribe("/Map/OccupancyGrid", 10, &GeneratorFist::gridmapCallback, this);
+        // path_sub = nh.subscribe("/generator_curve/paths", 10, &GeneratorFist::pathCallback, this);
+        gridmap_sub = nh.subscribe("/map2d1", 10, &GeneratorFist::gridmapCallback, this);
+        path_sub = nh.subscribe("/expect_pos0", 10, &GeneratorFist::pathCallback, this);
 
         gen_pub = nh.advertise<nav_msgs::Path>("/tube/generator_curve", 10);
         pipeline_gen_pub = nh.advertise<swarm_msgs::Pipeline>("/pipeline/paths", 1, true);

@@ -6,8 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /drone21
-        - /drone31
       Splitter Ratio: 0.5
     Tree Height: 753
   - Class: rviz/Selection
@@ -59,7 +57,7 @@ Visualization Manager:
       Marker Topic: /visualization/path
       Name: Path point
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 0.699999988079071
@@ -68,7 +66,7 @@ Visualization Manager:
       Draw Behind: false
       Enabled: true
       Name: Map
-      Topic: /Map/OccupancyGrid
+      Topic: /visualization/map
       Unreliable: false
       Use Timestamp: false
       Value: true
@@ -77,7 +75,7 @@ Visualization Manager:
       Marker Topic: /visualization/generator
       Name: Generator curve
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -85,7 +83,7 @@ Visualization Manager:
       Marker Topic: /visualization/cuv
       Name: Marker
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -93,7 +91,7 @@ Visualization Manager:
       Marker Topic: /visualization/right_curve
       Name: Right curve
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -101,7 +99,7 @@ Visualization Manager:
       Marker Topic: /visualization/left_curve
       Name: left curve
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -117,7 +115,7 @@ Visualization Manager:
       Marker Topic: /visualization/drone2
       Name: drone2
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -125,9 +123,42 @@ Visualization Manager:
       Marker Topic: /visualization/drone3
       Name: drone3
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: Arrows
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /expect_pos0
+      Unreliable: false
+      Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: false
+      Name: Map
+      Topic: /map2d1
+      Unreliable: false
+      Use Timestamp: false
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -156,25 +187,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 116.27803039550781
+      Distance: 34.12110137939453
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 20.726428985595703
-        Y: 44.98794937133789
-        Z: -1.0820539500855375e-5
+        X: -7.507656097412109
+        Y: 3.9497272968292236
+        Z: -1.9925006199628115e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.519796371459961
+      Pitch: 1.474796175956726
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.1154048442840576
+      Yaw: 3.0985841751098633
     Saved: ~
 Window Geometry:
   Displays:

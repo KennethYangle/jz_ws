@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 
 project(visiualization)
-
+find_package(Eigen3 REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   roscpp
@@ -19,6 +19,7 @@ catkin_package(
 include_directories(
 include
   ${catkin_INCLUDE_DIRS}
+  "/usr/include/eigen3"
 )
 
 ## Declare a C++ library
