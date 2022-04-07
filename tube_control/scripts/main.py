@@ -66,17 +66,18 @@ class UAV:
         self.tube_middle = np.array(self.tube_middle_list)
 
 class FreeFlight:
-    def __init__(self, drone_num):
+    def __init__(self, drone_index, drone_num):
         # UAVs status
+        self.drone_index = drone_index
         self.drone_num = drone_num
         self.swarm = list()
         for i in range(self.drone_num):
             self.swarm.append(UAV(i+1))
         # parameters
-        self.rs = 0.6
-        self.ra = 2.0
-        self.rt1 = 0.3
-        self.rt2 = 0.6
+        self.rs = 0.1
+        self.ra = 0.2
+        self.rt1 = 0.1
+        self.rt2 = 0.2
         self.vm = 2.0
         self.k1 = 1.0
         self.k2 = 50.0
@@ -138,8 +139,8 @@ class FreeFlight:
 
             commands.append( (self.sat(self.swarm[i].Vline + self.swarm[i].Vcollision + self.swarm[i].Vtube + self.swarm[i].Vheight, self.vm)).tolist() )
 
-            # if i == 2:
-            #     print("Vtube:", self.swarm[i].Vtube)
+            if i == self.drone_index:
+                print("V: {}, {}, {}, {}, {}, {:.1f}, {:.1f}, {:.1f}".format(self.swarm[i].Vline, self.swarm[i].Vcollision, self.swarm[i].Vtube, self.swarm[i].Vheight, self.middle_locate, rtksii, np.linalg.norm(self.swarm[i].ksi[[0,1]] - mksii), dti))
 
         return commands
 
@@ -177,7 +178,7 @@ if __name__ == "__main__":
     drone_index = drone_id - 1
 
     # Destinations, custom
-    ff = FreeFlight(drone_num)
+    ff = FreeFlight(drone_index, drone_num)
     print("TubeControl Initialized")
 
     # main loop

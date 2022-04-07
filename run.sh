@@ -22,9 +22,9 @@ sleep 5s
 roslaunch bs_assis bs_dds.launch  mav_id:=${MAVID} mav_num:=${MAVNUM} & PID3=$!
 sleep 5s
 
-# 可视化
-roslaunch visiualization visual.launch  & PID4=$!
-sleep 3s
+# # 可视化
+# roslaunch visiualization visual.launch  & PID4=$!
+# sleep 3s
 
 # 目标检测
 rosrun detection img_pub.py  & PID5=$!

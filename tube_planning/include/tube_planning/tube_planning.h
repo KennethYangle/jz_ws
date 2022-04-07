@@ -19,6 +19,8 @@ namespace Tube_planning
         int n_order, n_coef, n_poly, n_obj;
         int path_length;
 
+        int count;
+
         Eigen::MatrixXd Path, Poly_x, Poly_y;
         Eigen::ArrayXd ts;
         Eigen::RowVector2d p0, v0, a0, pe, ve, ae;

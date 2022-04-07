@@ -184,10 +184,16 @@ namespace Tube_planning
             this_pose_stamped.pose.position.z = 1.8;
             tube_left_curve.poses.push_back(this_pose_stamped);
         }
+        count = count + 1;
+        if (count > 10)
+        {
+            count = 1;
+            pipeline_gen_pub.publish(tube);
+            tube_right.publish(tube_right_curve);
+            tube_left.publish(tube_left_curve);
+        }
 
-        pipeline_gen_pub.publish(tube);
-        tube_right.publish(tube_right_curve);
-        tube_left.publish(tube_left_curve);
+        
 
 
             
@@ -540,7 +546,11 @@ namespace Tube_planning
 
             path.poses.push_back(this_pose_stamped);
         }
-        gen_pub.publish(path);
+        if (count > 5)
+        {
+            gen_pub.publish(path);
+        }
+        
         // pipeline_pub.publish(tube);
 
         // Gnuplot g1("lines");
