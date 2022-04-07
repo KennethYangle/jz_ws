@@ -13,7 +13,7 @@ from std_msgs.msg import Int16
 from decision_maker.msg import Action, Waypoint, Value, IdList, SwarmInfo
 from nav_msgs.msg import OccupancyGrid, Path
 from geometry_msgs.msg import PoseStamped
-from darknet_ros_msgs.msg import BoundingBoxes
+from swarm_msgs.msg import BoundingBoxes
 
 from other_elements_h import Target, Environment
 from center_uav import CenterObj

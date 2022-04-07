@@ -14,7 +14,7 @@ from std_msgs.msg import Int16
 from decision_maker.msg import Action, Waypoint, Value, IdList, SwarmInfo, PlotPoint
 from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import PoseStamped, Point
-from darknet_ros_msgs.msg import BoundingBoxes, BoundingBox
+from swarm_msgs.msg import BoundingBoxes, BoundingBox
 
 
 class other_part_simulation:

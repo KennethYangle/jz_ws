@@ -9,6 +9,7 @@ project(decision_maker)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED
  COMPONENTS
+  swarm_msgs
   geometry_msgs
   roscpp
   rospy
