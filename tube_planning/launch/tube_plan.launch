@@ -1,7 +1,7 @@
 <launch>
 
   <!-- 管道的最大半径，单位：米-->
-  <arg name="max_radius" value="3.0"/>
+  <arg name="max_radius" value="1"/>
   <!-- 生成线阶数-->
   <arg name="n_order" value="6"/>
   <!-- 期望运行时间 单位：秒-->

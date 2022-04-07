@@ -48,7 +48,7 @@ namespace Tube_planning
 
         // gridmap_sub = nh.subscribe("/Map/OccupancyGrid", 10, &GeneratorFist::gridmapCallback, this);
         // path_sub = nh.subscribe("/generator_curve/paths", 10, &GeneratorFist::pathCallback, this);
-        gridmap_sub = nh.subscribe("/map2d1", 10, &GeneratorFist::gridmapCallback, this);
+        gridmap_sub = nh.subscribe("/visualization/map", 10, &GeneratorFist::gridmapCallback, this);
         path_sub = nh.subscribe("/expect_pos0", 10, &GeneratorFist::pathCallback, this);
 
         gen_pub = nh.advertise<nav_msgs::Path>("/tube/generator_curve", 10);
@@ -65,6 +65,9 @@ namespace Tube_planning
         gridmap.width = msg->info.width;
         gridmap.height = msg->info.height;
         gridmap.data = Eigen::MatrixXi::Zero(gridmap.height, gridmap.width);
+        gridmap.position_x = msg->info.origin.position.x;
+        gridmap.position_y = msg->info.origin.position.y;
+        gridmap.position_z = msg->info.origin.position.z;
 
         for (int i = 0; i < gridmap.height; i++)
         {
@@ -162,23 +165,23 @@ namespace Tube_planning
 
             unit.right.x = fo_x_r(i);
             unit.right.y = fo_y_r(i);
-            unit.right.z = 1;
+            unit.right.z = 1.8;
             unit.left.x = fo_x_l(i);
             unit.left.y = fo_y_l(i);
-            unit.left.z = 1;
+            unit.left.z = 1.8;
             unit.middle.x = ff(0, i);
             unit.middle.y = ff(1, i);
-            unit.middle.z = 1;
+            unit.middle.z = 1.8;
             tube.units.push_back(unit);
 
             this_pose_stamped.pose.position.x = fo_x_r(i);
             this_pose_stamped.pose.position.y = fo_y_r(i);
-            this_pose_stamped.pose.position.z = 1;
+            this_pose_stamped.pose.position.z = 1.8;
             tube_right_curve.poses.push_back(this_pose_stamped);
 
             this_pose_stamped.pose.position.x = fo_x_l(i);
             this_pose_stamped.pose.position.y = fo_y_l(i);
-            this_pose_stamped.pose.position.z = 1;
+            this_pose_stamped.pose.position.z = 1.8;
             tube_left_curve.poses.push_back(this_pose_stamped);
         }
 
@@ -261,6 +264,7 @@ namespace Tube_planning
         OsqpEigen::Solver solver;
 
         solver.settings()->setWarmStart(true);
+        solver.settings()->setVerbosity(false);
         solver.data()->setNumberOfVariables(rad_n_poly * rad_n_coef);
         solver.data()->setNumberOfConstraints(4*rad_n_poly+4);
         solver.data()->setHessianMatrix(hessian);
@@ -291,7 +295,7 @@ namespace Tube_planning
         calcTvec(max_cuv_ts(max_cuv_ts.size() - 1), 1, tvec);
         Aeq.block(3, rad_n_coef * (rad_n_poly - 1), 1, n_coef) = tvec;
 
-        ub.head(4) << rad_p0, 0,  rad_pe, 0;
+        ub.head(4) << 100, 0,  100, 0;
         lb.head(4) << rad_p0, 0,  rad_pe, 0;
 
         // mid p constraints    (n_ploy-1 equations)
@@ -349,7 +353,7 @@ namespace Tube_planning
         }
         
         double w1 = 1;
-        double w2 = 0.002;
+        double w2 = 0.2;
         w1 = w1 / (w1 + w2);
         w2 = w2 / (w1 + w2);
         Q_all = w1 * Q_all0 + w2 * Q_all1;
@@ -395,6 +399,7 @@ namespace Tube_planning
         OsqpEigen::Solver solver;
 
         solver.settings()->setWarmStart(true);
+        solver.settings()->setVerbosity(false);
         solver.data()->setNumberOfVariables(n_poly * n_coef);
         solver.data()->setNumberOfConstraints(4 * n_poly + 2);
         solver.data()->setHessianMatrix(hessian);
@@ -531,7 +536,7 @@ namespace Tube_planning
             this_pose_stamped.header.frame_id = "map";
             this_pose_stamped.pose.position.x = xx(i);
             this_pose_stamped.pose.position.y = yy(i);
-            this_pose_stamped.pose.position.z = 1;
+            this_pose_stamped.pose.position.z = 1.8;
 
             path.poses.push_back(this_pose_stamped);
         }
@@ -660,7 +665,7 @@ namespace Tube_planning
         //           << ts_cuv << std::endl;
         // std::cout << "记录曲率最大处对应时刻补全 " << std::endl
         //           << max_cuv_ts << std::endl;
-        // std::cout << "记录曲率最大处下标 " << std::endl
+        // // std::cout << "记录曲率最大处下标 " << std::endl
         //           << k_cuv << std::endl;
         // std::cout << "记录曲率最大处下标补全" << std::endl
         //           << max_cuv_k << std::endl;
@@ -717,20 +722,20 @@ namespace Tube_planning
             geometry_msgs::PoseStamped cuv_r_stamped;
             cuv_r_stamped.pose.position.x = ff(0, max_cuv_k(i));
             cuv_r_stamped.pose.position.y = ff(1, max_cuv_k(i));
-            cuv_r_stamped.pose.position.z = 1;
+            cuv_r_stamped.pose.position.z = 1.8;
             cuv_r.poses.push_back(cuv_r_stamped);
             cuv_r_stamped.pose.position.x = ff(0, max_cuv_k(i)) + 1 / max_cuv_r(i) * sign_normal(0, max_cuv_k(i));
             cuv_r_stamped.pose.position.y = ff(1, max_cuv_k(i)) + 1 / max_cuv_r(i) * sign_normal(1, max_cuv_k(i));
-            cuv_r_stamped.pose.position.z = 1;
+            cuv_r_stamped.pose.position.z = 1.8;
             cuv_r.poses.push_back(cuv_r_stamped);
 
             cuv_r_stamped.pose.position.x = ff(0, max_cuv_k(i));
             cuv_r_stamped.pose.position.y = ff(1, max_cuv_k(i));
-            cuv_r_stamped.pose.position.z = 1;
+            cuv_r_stamped.pose.position.z = 1.8;
             cuv_r.poses.push_back(cuv_r_stamped);
             cuv_r_stamped.pose.position.x = ff(0, max_cuv_k(i)) - 1 / max_cuv_l(i) * sign_normal(0, max_cuv_k(i));
             cuv_r_stamped.pose.position.y = ff(1, max_cuv_k(i)) - 1 / max_cuv_l(i) * sign_normal(1, max_cuv_k(i));
-            cuv_r_stamped.pose.position.z = 1;
+            cuv_r_stamped.pose.position.z = 1.8;
             cuv_r.poses.push_back(cuv_r_stamped);
         }
         cuv_right_pub.publish(cuv_r);
@@ -744,8 +749,9 @@ namespace Tube_planning
         {
             findObstacle(radiusRight.min_dis_mat, max_cuv_k, tt, ff, sign_normal);
             findObstacle(radiusLeft.min_dis_mat, max_cuv_k, tt, ff, -1 * sign_normal);
+            // std::cout << "radiusRight.min_dis_mat" << std::endl;
             // std::cout << radiusRight.min_dis_mat << std::endl;
-            // std::cout << "-------------" << std::endl;
+            // std::cout << "radiusLeft.min_dis_mat" << std::endl;
             // std::cout << radiusLeft.min_dis_mat << std::endl;
             // wait_for_key();
 
@@ -757,14 +763,30 @@ namespace Tube_planning
                 geometry_msgs::PoseStamped max_dis_temp;
                 max_dis_temp.pose.position.x = ff(0, index);
                 max_dis_temp.pose.position.y = ff(1, index);
-                max_dis_temp.pose.position.z = 1;
+                max_dis_temp.pose.position.z = 1.8;
                 max_dis.poses.push_back(max_dis_temp);
 
                 max_dis_temp.pose.position.x = ff(0, index) - radius * sign_normal(0, index);
                 max_dis_temp.pose.position.y = ff(1, index) - radius * sign_normal(1, index);
-                max_dis_temp.pose.position.z = 1;
+                max_dis_temp.pose.position.z = 1.8;
                 max_dis.poses.push_back(max_dis_temp);
             }
+            for (int i = 0; i < radiusRight.min_dis_mat.rows(); i++)
+            {
+                int index = radiusRight.min_dis_mat(i, 0);
+                double radius = radiusRight.min_dis_mat(i, 1);
+                geometry_msgs::PoseStamped max_dis_temp;
+                max_dis_temp.pose.position.x = ff(0, index);
+                max_dis_temp.pose.position.y = ff(1, index);
+                max_dis_temp.pose.position.z = 1.8;
+                max_dis.poses.push_back(max_dis_temp);
+
+                max_dis_temp.pose.position.x = ff(0, index) + radius * sign_normal(0, index);
+                max_dis_temp.pose.position.y = ff(1, index) + radius * sign_normal(1, index);
+                max_dis_temp.pose.position.z = 1.8;
+                max_dis.poses.push_back(max_dis_temp);
+            }
+
             dis_right_pub.publish(max_dis);
 
 
@@ -784,17 +806,15 @@ namespace Tube_planning
             for (int k1 = seg_time_k(k); k1 < seg_time_k(k + 1); k1++)
             {
                 /* 计算倾斜角 */
-                double xp = ff(0, k1);
-                double yp = ff(1, k1);
+                double xp = ff(0, k1) - gridmap.position_x;
+                double yp = ff(1, k1) - gridmap.position_y;
                 double theta = atan2(sign_normal(1, k1), sign_normal(0, k1));
-                // if (sign_normal(0, k1) < 0 && sign_normal(1, k1) > 0)
-                // {
-                //     theta = theta + M_PI;
-                // }
-                // else if (sign_normal(0, k1) < 0 && sign_normal(1, k1) < 0)
-                // {
-                //     theta = theta - M_PI;
-                // }
+                // std::cout << "ff(0, k1) " << ff(0, k1) << std::endl;
+                // std::cout << "xp " << xp << std::endl;
+                // std::cout << "x " << gridmap.position_x << std::endl;
+                // std::cout << "ff(1, k1) " << ff(1, k1) << std::endl;
+                // std::cout << "yp " << yp << std::endl;
+                // std::cout << "y " << gridmap.position_y << std::endl;
                 /* 寻找障碍物 */
                 int k2;
                 for (k2 = 0; k2 < r_max / gridmap.resolution; k2++)
@@ -803,11 +823,13 @@ namespace Tube_planning
                     int bw_y = std::min(std::max(static_cast<int>(k2 * sin(theta) + yp / gridmap.resolution), 0), gridmap.height - 1);
                     // std::cout << gridmap.width - 1 << std::endl;
                     // std::cout << gridmap.data.size() << std::endl;
-                    // std::cout << "bw_x: " << bw_x << std::endl;
-                    // std::cout << "bw_y: " << bw_y << std::endl;
+                    
                     if (gridmap.data(bw_y, bw_x) > 50)
                     {
-                        // std::cout << "find the obstacle: " << k2 * gridmap.resolution<< std::endl;
+                        // std::cout << "bw_x: " << bw_x << std::endl;
+                        // std::cout << "bw_y: " << bw_y << std::endl;
+                        // std::cout << "find the obstacle: " << k2 * gridmap.resolution << std::endl;
+                        // std::cout << "index: " << k1 << std::endl;
                         break;
                     }
                 }
@@ -815,7 +837,7 @@ namespace Tube_planning
                 if (mindis_tmp < mindis)
                 {
                     min_dis_k(k, 0) = k1;     //最大距离对应下标
-                    min_dis_k(k, 1) = mindis_tmp;             //最大距离
+                    min_dis_k(k, 1) = std::max(mindis_tmp, 0.1) - gridmap.resolution;             //最大距离
                     min_dis_k(k, 2) = tt(k1); //最大距离对应时刻
                     mindis = mindis_tmp;
                 }

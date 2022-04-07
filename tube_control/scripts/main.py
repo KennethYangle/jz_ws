@@ -90,6 +90,10 @@ class FreeFlight:
         commands = list()
         # for each UAV
         for i in range(self.drone_num):
+            if np.size(self.swarm[i].tube_middle,0) == 0:
+                commands.append(np.array([0.0, 0.0, 0.0]))
+                continue
+            
             # attractive potential
 
             self.middle_locate = 0

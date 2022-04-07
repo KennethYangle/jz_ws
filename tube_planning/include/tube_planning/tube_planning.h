@@ -29,6 +29,9 @@ namespace Tube_planning
             int width;
             int height;
             Eigen::MatrixXi data;
+            double position_x;
+            double position_y;
+            double position_z;
         };
         GridMap gridmap;
 

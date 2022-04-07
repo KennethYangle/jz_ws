@@ -96,8 +96,8 @@ namespace Tube_planning
         marker.action = visualization_msgs::Marker::ADD;
         marker.id = 5;
         marker.type = visualization_msgs::Marker::CUBE;
-        marker.scale.x = 1;
-        marker.scale.y = 1;
+        marker.scale.x = 0.3;
+        marker.scale.y = 0.3;
         marker.scale.z = 0.1;
         marker.color.r = 1.0f;
         // marker.color.b = 1.0f;
@@ -119,8 +119,8 @@ namespace Tube_planning
         marker.action = visualization_msgs::Marker::ADD;
         marker.id = 5;
         marker.type = visualization_msgs::Marker::CUBE;
-        marker.scale.x = 1;
-        marker.scale.y = 1;
+        marker.scale.x = 0.3;
+        marker.scale.y = 0.3;
         marker.scale.z = 0.1;
         marker.color.r = 1.0f;
         // marker.color.b = 1.0f;
@@ -143,8 +143,8 @@ namespace Tube_planning
         marker.action = visualization_msgs::Marker::ADD;
         marker.id = 5;
         marker.type = visualization_msgs::Marker::CUBE;
-        marker.scale.x = 1;
-        marker.scale.y = 1;
+        marker.scale.x = 0.3;
+        marker.scale.y = 0.3;
         marker.scale.z = 0.1;
         marker.color.r = 1.0f;
         // marker.color.b = 1.0f;
