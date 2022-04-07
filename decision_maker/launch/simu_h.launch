@@ -1,0 +1,10 @@
+<launch>
+	<arg name="uav_num" default="2"/>
+	<arg name="level_id" default="1"/>
+	<node pkg="decision_maker" name="simu_and_send" type="simu_part_h.py">
+		<param name="uav_num" value="$(arg uav_num)"/>
+		<param name="level_id" value="$(arg level_id)"/>
+	</node>
+</launch>
+
+    

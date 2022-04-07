@@ -22,31 +22,38 @@ sleep 5s
 roslaunch bs_assis bs_dds.launch  mav_id:=${MAVID} mav_num:=${MAVNUM} & PID3=$!
 sleep 5s
 
+# 可视化
+roslaunch visiualization visual.launch  & PID4=$!
+sleep 3s
 
 # 目标检测
-rosrun detection img_pub.py  & PID4=$!
+rosrun detection img_pub.py  & PID5=$!
 sleep 3s
 
 # 控制汇总
-roslaunch offboard_pkg assemble.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID5=$!
+roslaunch offboard_pkg assemble.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID6=$!
 sleep 5s
 
 # 决策相关
-roslaunch decision drone.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID6=$!
+roslaunch decision drone.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID7=$!
+sleep 1s
+roslaunch decision_maker simu_h.launch  & PID8=$!
+sleep 1s
+roslaunch decision_maker one_uav_h.launch  & PID9=$!
 sleep 5s
 
 # 打击
-roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID7=$!
+roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID10=$!
 sleep 5s
 
 # 管道生成
-roslaunch tube_planning tube_plan.launch & PID8=$!
+roslaunch tube_planning tube_plan.launch & PID11=$!
 sleep 5s
 
 # 管道飞行
-roslaunch tube_control tube.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID9=$!
+roslaunch tube_control tube.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID12=$!
 sleep 5s
 
 wait
-kill -9 PID0 PID1 PID2 PID3 PID4 PID5 PID6 PID7 PID8 PID9
+kill -9 PID0 PID1 PID2 PID3 PID4 PID5 PID6 PID7 PID8 PID9 PID10 PID11 PID12
 exit
