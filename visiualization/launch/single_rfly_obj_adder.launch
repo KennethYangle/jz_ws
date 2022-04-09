@@ -1,0 +1,9 @@
+<launch>
+   <arg name="mav_id" default="1" />
+   <arg name="ue4_ip" default="192.168.3.1" />
+   <node pkg="visiualization" type="rfly_object_adder.py" name="rfly_object_adder" output="screen">
+        <param name="mav_id" value="$(arg mav_id)"/>
+        <param name="ue4_ip" value="$(arg ue4_ip)"/>
+   </node>
+
+</launch>

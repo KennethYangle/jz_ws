@@ -61,6 +61,7 @@ add_message_files(
   BoundingBox.msg
   BoundingBoxes.msg
   ObjectCount.msg
+  RflyObject.msg
 )
 
 ## Generate services in the 'srv' folder

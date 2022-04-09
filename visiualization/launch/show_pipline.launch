@@ -1,0 +1,13 @@
+<launch>
+   <arg name="mav_id" default="1" />
+   <arg name="mav_x" default="-144" />
+   <arg name="mav_y" default="43" />
+   <arg name="mav_z" default="0" />
+   <node pkg="visiualization" type="show_pipline.py" name="show_pipline" output="screen">
+        <param name="mav_id" value="$(arg mav_id)"/>
+        <param name="mav_x" value="$(arg mav_x)"/>
+        <param name="mav_y" value="$(arg mav_y)" />
+        <param name="mav_z" value="$(arg mav_z)" />
+   </node>
+
+</launch>
