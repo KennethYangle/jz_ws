@@ -3,10 +3,11 @@
 
 # all published and subscribed coordinates in this file are in the global coordinate system(FLU)
 
+from pyparsing import empty
 import rospy
-# import numpy as np
-from numpy import array
+import numpy as np
 from math import sqrt
+from copy import deepcopy
 
 from std_msgs.msg import Int16
 # from geometry_msgs.msg import Point32, Pose
@@ -58,6 +59,8 @@ class UAVObj:
 
         self.next_position = self.position[::]
         self.path_pos_list = []
+        self.last_path = []
+        self.last_pos = PoseStamped()
         self.path_msg = Path()
         # self.pos_msg = Waypoint()
         self.action_msg = Action()
@@ -212,7 +215,7 @@ class UAVObj:
     def map_update_callback(self, msg):
         if len(self.environment.grid_map):
             return
-        self.environment.grid_map = array(msg.data).reshape((msg.info.height, msg.info.width))
+        self.environment.grid_map = np.array(msg.data).reshape((msg.info.height, msg.info.width))
         self.environment.grid_resolution = msg.info.resolution
         self.environment.org_in_global = (msg.info.origin.position.x + X_BIAS, msg.info.origin.position.y + Y_BIAS)
         self.environment.height = msg.info.origin.position.z
@@ -311,12 +314,27 @@ class UAVObj:
             # print('uid', self.uav_id, 'tid', self.current_tar.tar_id, 'state', self.uav_state)
         if not len(self.environment.grid_map):
             return
+        
+
         if not self.tmp_list or not self.current_tar:
             self.search_target()
         # elif not self.current_tar:
         #     self.next_position = self.position[::]
         else:
             self.path_plan()
+
+        path_flag = False
+        if self.last_path == [] or self.path_pos_list == [] or len(self.last_path) != len(self.path_pos_list):
+            path_flag = True
+        for p, q in zip(self.last_path, self.path_pos_list):
+            # if p != q:
+            if np.linalg.norm(np.array(p)-np.array(q)) > 0.1:
+                path_flag = True
+                break
+        self.last_path = deepcopy(self.path_pos_list)
+        # if not path_flag:
+        #     return
+
         for nxt_pos in self.path_pos_list:
             pos_msg = PoseStamped()
             nxt_p = self.environment.grid2real(nxt_pos)
@@ -325,9 +343,15 @@ class UAVObj:
             pos_msg.pose.position.z = self.environment.height
             self.path_msg.poses.append(pos_msg)
         self.path_msg.header.frame_id = "map"
-        current_pos = PoseStamped()
-        current_pos.pose.position.x, current_pos.pose.position.y = self.position[::]
-        current_pos.pose.position.z = self.uav_height
+
+        if path_flag:
+            current_pos = PoseStamped()
+            current_pos.pose.position.x, current_pos.pose.position.y = self.position[::]
+            current_pos.pose.position.z = self.uav_height
+            self.last_pos = current_pos
+        else:
+            current_pos = self.last_pos
+
         self.path_msg.poses.append(current_pos)
         self.path_msg.poses.reverse()
         self.pos_talk.publish(self.path_msg)

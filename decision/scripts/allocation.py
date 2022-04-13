@@ -187,7 +187,7 @@ class Allocation:
         dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
         while dis > 0.2:
             dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
-            print("Wait... dis={}".format(dis))
+            # print("Wait... dis={}".format(dis))
             rate.sleep()
 
         # 1架飞机单独判断

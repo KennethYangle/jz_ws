@@ -139,8 +139,8 @@ class FreeFlight:
 
             commands.append( (self.sat(self.swarm[i].Vline + self.swarm[i].Vcollision + self.swarm[i].Vtube + self.swarm[i].Vheight, self.vm)).tolist() )
 
-            if i == self.drone_index:
-                print("V: {}, {}, {}, {}, {}, {:.1f}, {:.1f}, {:.1f}".format(self.swarm[i].Vline, self.swarm[i].Vcollision, self.swarm[i].Vtube, self.swarm[i].Vheight, self.middle_locate, rtksii, np.linalg.norm(self.swarm[i].ksi[[0,1]] - mksii), dti))
+            # if i == self.drone_index:
+            #     print("V: {}, {}, {}, {}, {}, {:.1f}, {:.1f}, {:.1f}".format(self.swarm[i].Vline, self.swarm[i].Vcollision, self.swarm[i].Vtube, self.swarm[i].Vheight, self.middle_locate, rtksii, np.linalg.norm(self.swarm[i].ksi[[0,1]] - mksii), dti))
 
         return commands
 
