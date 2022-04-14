@@ -23,7 +23,7 @@ namespace Tube_planning
         left_curve_sub = nh.subscribe("/tube/tube_left", 10, &Visiualization::leftCallback, this);
 
         /* sub nankai problem map */
-        nk_map_sub = nh.subscribe("/map2d1", 10, &Visiualization::nankaiCallback, this);
+        // nk_map_sub = nh.subscribe("/map2d1", 10, &Visiualization::nankaiCallback, this);
 
         /* sub drone point */
         drone1_sub = nh.subscribe("/drone_1/mavros/local_position/pose_cor", 10, &Visiualization::drone1Callback, this);
@@ -40,7 +40,7 @@ namespace Tube_planning
         drone1_pub = nh.advertise<visualization_msgs::Marker>("/visualization/drone1", 10);
         drone2_pub = nh.advertise<visualization_msgs::Marker>("/visualization/drone2", 10);
         drone3_pub = nh.advertise<visualization_msgs::Marker>("/visualization/drone3", 10);
-        nk_map_pub = nh.advertise<nav_msgs::OccupancyGrid>("/visualization/map", 10);
+        // nk_map_pub = nh.advertise<nav_msgs::OccupancyGrid>("/visualization/map", 10);
 
 
     }

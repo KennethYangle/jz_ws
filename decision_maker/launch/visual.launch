@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="decision_maker" name="gridmap_trans_node" type="gridmap_trans_node" output="screen">
+    </node>
+</launch>

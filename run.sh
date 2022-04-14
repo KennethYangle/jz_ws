@@ -47,23 +47,25 @@ sleep 5s
 # 决策相关
 roslaunch decision drone.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID9=$!
 sleep 1s
-roslaunch decision_maker simu_h.launch  & PID10=$!
+roslaunch decision_maker visual.launch  & PID10=$!
 sleep 1s
-roslaunch decision_maker one_uav_h.launch  & PID11=$!
+roslaunch decision_maker simu_h.launch  & PID11=$!
+sleep 1s
+roslaunch decision_maker one_uav_h.launch  & PID12=$!
 sleep 5s
 
 # 打击
-roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID12=$!
+roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID13=$!
 sleep 5s
 
 # 管道生成
-roslaunch tube_planning tube_plan.launch & PID13=$!
+roslaunch tube_planning tube_plan.launch & PID14=$!
 sleep 5s
 
 # 管道飞行
-roslaunch tube_control tube.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID14=$!
+roslaunch tube_control tube.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID15=$!
 sleep 5s
 
 wait
-kill -9 PID0 PID1 PID2 PID3 PID4 PID5 PID6 PID7 PID8 PID9 PID10 PID11 PID12 PID13 PID14
+kill -9 PID0 PID1 PID2 PID3 PID4 PID5 PID6 PID7 PID8 PID9 PID10 PID11 PID12 PID13 PID14 PID15
 exit

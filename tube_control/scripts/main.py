@@ -76,8 +76,8 @@ class FreeFlight:
         # parameters
         self.rs = 0.1
         self.ra = 0.2
-        self.rt1 = 0.1
-        self.rt2 = 0.2
+        self.rt1 = 0.01
+        self.rt2 = 0.05
         self.vm = 2.0
         self.k1 = 1.0
         self.k2 = 50.0
@@ -112,7 +112,7 @@ class FreeFlight:
             C = np.matmul(rot,right_left.T)
             tc = C.T / np.linalg.norm(C)
 
-            self.swarm[i].Vline[[0,1]] = self.sat(self.k1 * self.vm * tc, self.vm)
+            self.swarm[i].Vline[[0,1]] = -self.sat(self.k1 * self.vm * tc, self.vm)
 
             # repulsive potentials
 

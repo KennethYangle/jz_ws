@@ -7,6 +7,7 @@ project(decision_maker)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(Eigen3 REQUIRED)
 find_package(catkin REQUIRED
  COMPONENTS
   swarm_msgs
@@ -14,6 +15,8 @@ find_package(catkin REQUIRED
   roscpp
   rospy
   std_msgs
+  nav_msgs
+  visualization_msgs
   message_generation
 )
 
@@ -123,10 +126,12 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES decision_maker
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
+LIBRARIES visiualization
+ CATKIN_DEPENDS nav_msgs roscpp visualization_msgs
 )
 
 ###########
@@ -136,8 +141,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
+include
+${catkin_INCLUDE_DIRS}
+  "/usr/include/eigen3"
 )
 
 ## Declare a C++ library
@@ -154,7 +160,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/decision_maker_node.cpp)
-
+add_executable(gridmap_trans_node src/visiual_main.cpp
+src/visiualization_fun.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -169,7 +176,9 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-
+target_link_libraries(gridmap_trans_node
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
