@@ -14,7 +14,7 @@ local_pos_bia = PoseStamped()
 
 # 局部坐标上添加偏移量，得到全局坐标
 def local_pos_cb(msg):
-    global local_pos_pub, param_num, param_id,local_pos_bia
+    global local_pos_pub, param_num, param_id, vehicle_interval, local_pos_bia
     '''
     # 以及UE4生成的飞机法则进行编号，如果ue4生成方式变化，这里也需要编号
     cloum = (param_num+1)//2
@@ -25,8 +25,8 @@ def local_pos_cb(msg):
     bias_ue4_y = 2 * ((param_id -1) % cloum)
     '''
     cloum = int(np.sqrt(param_num-1)) + 1
-    bias_ue4_x = 2 * ((param_id - 1)//cloum)        # UE4中x偏移
-    bias_ue4_y = 2 * ((param_id - 1) % cloum)       # UE4中y偏移
+    bias_ue4_x = vehicle_interval * ((param_id - 1)//cloum)        # UE4中x偏移
+    bias_ue4_y = vehicle_interval * ((param_id - 1) % cloum)       # UE4中y偏移
 
     
     # 坐标转换，ue4_y对应mavros_x，ue4_x对应mavros_y
@@ -43,6 +43,7 @@ if __name__ == '__main__':
     rospy.init_node('pose_cor', anonymous=True)
     param_id = rospy.get_param("~drone_id")
     param_num = rospy.get_param("~drone_num")
+    vehicle_interval = rospy.get_param("~vehicle_interval")
 
     local_pos_pub = rospy.Publisher('/mavros/local_position/pose_cor', PoseStamped, queue_size=10)  # 发布校正后的坐标
     local_pos_sub = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, local_pos_cb)      # 订阅局部坐标

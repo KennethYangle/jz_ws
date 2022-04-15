@@ -38,7 +38,7 @@ SET /a ORIGIN_POS_Y=43
 SET /a ORIGIN_YAW=90
 
 REM Set the interval between two vehicle, unit:m 
-SET /a VEHICLE_INTERVAL=2
+SET /a VEHICLE_INTERVAL=1
 
 
 REM Set broadcast to other computer; IS_BROADCAST=0: only this computer, IS_BROADCAST=1: broadcast; 

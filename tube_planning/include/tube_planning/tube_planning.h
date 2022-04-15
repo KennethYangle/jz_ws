@@ -14,6 +14,7 @@ namespace Tube_planning
     class GeneratorFist
     {
     private:
+        int uav_id;
         double r_max;
         double total_time;
         int n_order, n_coef, n_poly, n_obj;

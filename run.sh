@@ -10,6 +10,7 @@ UE4IP="192.168.3.1"
 MAVX="-144"
 MAVY="43"
 MAVZ="0"
+VEHICLE_INTERVAL=1
 
 echo "this MAV id :${MAVID}"
 
@@ -20,7 +21,7 @@ sleep 3s
 
 # mavros and localization
 roslaunch bs_assis bs_mavros.launch  mav_id:=${MAVID} & PID1=$!
-roslaunch localization bias.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID2=$!
+roslaunch localization bias.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} vehicle_interval:=${VEHICLE_INTERVAL} & PID2=$!
 sleep 5s
 
 # DDS
@@ -49,9 +50,9 @@ roslaunch decision drone.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID9
 sleep 1s
 roslaunch decision_maker visual.launch  & PID10=$!
 sleep 1s
-roslaunch decision_maker simu_h.launch  & PID11=$!
+roslaunch decision_maker simu_h.launch  uav_num:=${MAVNUM} & PID11=$!
 sleep 1s
-roslaunch decision_maker one_uav_h.launch  & PID12=$!
+roslaunch decision_maker one_uav_h.launch  uav_id:=`expr ${MAVID} - 1` & PID12=$!
 sleep 5s
 
 # 打击
@@ -59,7 +60,7 @@ roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID1
 sleep 5s
 
 # 管道生成
-roslaunch tube_planning tube_plan.launch & PID14=$!
+roslaunch tube_planning tube_plan.launch  uav_id:=`expr ${MAVID} - 1` & PID14=$!
 sleep 5s
 
 # 管道飞行

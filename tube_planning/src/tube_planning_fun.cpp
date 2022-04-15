@@ -39,6 +39,7 @@ namespace Tube_planning
 {
     void GeneratorFist::init(ros::NodeHandle &nh)
     {
+        nh.param("uav_id", uav_id, 0);
         nh.param("virtual_tube/max_radius", r_max, 0.1);
         nh.param("generator_curve/total_time", total_time, 10.0);
         nh.param("generator_curve/n_order", n_order, 5);
@@ -49,7 +50,7 @@ namespace Tube_planning
         // gridmap_sub = nh.subscribe("/Map/OccupancyGrid", 10, &GeneratorFist::gridmapCallback, this);
         // path_sub = nh.subscribe("/generator_curve/paths", 10, &GeneratorFist::pathCallback, this);
         gridmap_sub = nh.subscribe("/visualization/map", 10, &GeneratorFist::gridmapCallback, this);
-        path_sub = nh.subscribe("/expect_pos0", 10, &GeneratorFist::pathCallback, this);
+        path_sub = nh.subscribe("/expect_pos"+std::to_string(uav_id), 10, &GeneratorFist::pathCallback, this);
 
         gen_pub = nh.advertise<nav_msgs::Path>("/tube/generator_curve", 10);
         pipeline_gen_pub = nh.advertise<swarm_msgs::Pipeline>("/pipeline/paths", 1, true);

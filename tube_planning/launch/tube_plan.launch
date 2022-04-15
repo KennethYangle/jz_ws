@@ -1,5 +1,6 @@
 <launch>
-
+  <!-- 无人机id，从0开始编号 -->
+	<arg name="uav_id" default="0"/>
   <!-- 管道的最大半径，单位：米-->
   <arg name="max_radius" value="1.0"/>
   <!-- 生成线阶数-->
@@ -27,6 +28,7 @@
 
   <!-- 管道规划-->
   <node pkg="tube_planning" name="tube_plan_node" type="tube_plan_node" output="screen">
+		<param name="uav_id" value="$(arg uav_id)" type="int"/>
     <param name="virtual_tube/max_radius"  value="$(arg max_radius)" type="double"/>
     <param name="generator_curve/total_time" value="$(arg total_time)" type="double"/>
     <param name="generator_curve/n_order" value="$(arg n_order)" type="int"/>
