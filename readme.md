@@ -1,7 +1,7 @@
 # Windows端-RflySim
 
 **step 1**. 复制出来`32s/DistFQScenePlay_V3`文件夹，里面为Windows端所需的脚本
-，`\DistFQScenePlay_V3\StartScript`下为启动脚本
+，`DistFQScenePlay_V3/StartScript`下为启动脚本
 
 **step 2**. 修改`config.json`里面图像传输的目标NX的ip地址和端口号，这里需要和NX上面接收传图的ROS节点的launch文件中相一致。
 
@@ -43,6 +43,13 @@
   make
   sudo make install
 ```
+* 安装`scipy`
+```
+  sudo apt-get install python-scipy
+```
+* 安装`DDS`
+
+  参考 https://fast-dds.docs.eprosima.com/en/latest/installation/sources/sources_linux.html
 
 **step 4**. 编译`src`内源码。
 ```
