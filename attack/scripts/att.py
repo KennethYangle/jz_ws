@@ -74,7 +74,7 @@ def pos_image_cb(msg):
         image_failed_cnt += 1
     else:
         image_failed_cnt = 0
-    if image_failed_cnt <= 20 and image_failed_cnt > 0:
+    if image_failed_cnt <= 2 and image_failed_cnt > 0:      # 20有点长
         pass
     else:
         pos_i[0] = x
@@ -122,6 +122,7 @@ if __name__=="__main__":
     while not rospy.is_shutdown():
         print("time: {}".format(rospy.Time.now().to_sec() - last_request))
         pos_info = {"mav_pos": mav_pos, "mav_vel": mav_vel, "mav_R": mav_R}
+        print("mav_pos: {}\nmav_vel: {}".format(mav_pos, mav_vel))
 
         if dj_action.dj == True:
             cmd = u.RotateAttackController(pos_info, pos_i, image_center)

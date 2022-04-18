@@ -55,7 +55,16 @@ class Px4Controller:
             self.takeoff(h=1.8)
 
         if self.scene == "paper":           # 论文使用
-            self.takeoff(h=3)
+            self.takeoff(h=6)
+            des_pos = np.array([0, 40, 6])
+            dis = np.linalg.norm(des_pos-self.mav_pos)
+            command_vel = TwistStamped()
+            while dis > 0.5:
+                norm_vel = (des_pos-self.mav_pos)/dis*11
+                command_vel.twist.linear.x,command_vel.twist.linear.y,command_vel.twist.linear.z = norm_vel
+                self.vel_pub.publish(command_vel)
+                dis = np.linalg.norm(des_pos-self.mav_pos)
+                self.rate.sleep()
 
         if self.scene == "freeflight":      # test for freeflight.py
             if self.drone_id == 1:

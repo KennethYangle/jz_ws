@@ -3,7 +3,8 @@
 . ../devel/setup.bash
 
 # 获取飞机ID，设置总飞机数
-MAVID=`expr ${HOSTNAME:4:2} + 0`
+# MAVID=`expr ${HOSTNAME:4:2} + 0`
+MAVID=1
 MAVNUM=1
 # RflySim仿真参数
 UE4IP="192.168.3.1"
@@ -42,17 +43,20 @@ sleep 3s
 
 # 控制汇总
 roslaunch offboard_pkg assemble.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID6=$!
-sleep 5s
+sleep 2s
 
 # 决策相关
 roslaunch decision drone.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID7=$!
 sleep 1s
 
 # 打击
+roslaunch attack data_saver.launch & PID11=$!
+sleep 2s
 roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID10=$!
-sleep 5s
+sleep 3s
 
 
 wait
 kill -9 PID0 PID1 PID2 PID3 PID4 PID5 PID6 PID7 PID8 PID9 PID10 PID11 PID12
+echo "kill done"
 exit

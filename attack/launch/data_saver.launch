@@ -1,0 +1,6 @@
+<launch>
+   <arg name="save_path" default="$(find attack)/../../data" />
+   <node pkg="attack" type="data_saver.py" name="data_saver" output="screen">
+      <param name="save_path" value="$(arg save_path)"/>
+   </node>
+</launch>
