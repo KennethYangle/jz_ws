@@ -56,7 +56,7 @@ class Px4Controller:
 
         if self.scene == "paper":           # 论文使用
             self.takeoff(h=6)
-            des_pos = np.array([0, 35, 4])
+            des_pos = np.array([0, 35, 3.5])
             dis = np.linalg.norm(des_pos-self.mav_pos)
             command_vel = TwistStamped()
             while dis > 0.5:

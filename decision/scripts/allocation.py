@@ -183,7 +183,7 @@ class Allocation:
             rate.sleep()
 
         # 等待到达（应由决策触发）
-        des_pos = np.array([0,30,4])
+        des_pos = np.array([0,30,3.5])
         dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
         while dis > 1:
             dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
