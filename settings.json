@@ -1,9 +1,9 @@
 {
     "Docs": "settings.md",
     "MODE": "Simulation",
-    "SCENE": "32s",
+    "SCENE": "paper",
     "Debug": {
-        "is_show_rgb": false,
+        "is_show_rgb": true,
         "is_show_hsv": false
     },
     "RealFlight": {
@@ -20,10 +20,10 @@
         "WIDTH": 640,
         "HEIGHT": 480,
         "F": 320,
-        "k_ibvs_hor": 15,
-        "k_ibvs_ver": 40,
-        "k_ibvs_yaw": 0.002,
+        "k_ibvs_hor": 18,
+        "k_ibvs_ver": 10,
+        "k_ibvs_yaw": 0.001,
         "acc_rate_ibvs": 0.03,
-        "max_v_ibvs": 17
+        "max_v_ibvs": 20
     }
 }

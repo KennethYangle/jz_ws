@@ -56,7 +56,7 @@ class Px4Controller:
 
         if self.scene == "paper":           # 论文使用
             self.takeoff(h=6)
-            des_pos = np.array([0, 40, 6])
+            des_pos = np.array([0, 35, 4])
             dis = np.linalg.norm(des_pos-self.mav_pos)
             command_vel = TwistStamped()
             while dis > 0.5:
@@ -245,7 +245,6 @@ if __name__=="__main__":
 
     # 飞机初始化，解锁、offboard、飞到厂房前
     px4 = Px4Controller(param_id, setting["SCENE"])
-    px4.start()
-
     ass = Assemble(param_id)
+    px4.start()
     ass.begin_task()

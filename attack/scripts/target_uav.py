@@ -10,7 +10,7 @@ vehicleType = 152   # red ball
 MotorRPMSMean = 0
 # target_origin = [25,0,-2]
 # omega = 0.2          # T = 2*pi/omega
-target_origin = [65,0,-1.7]
+target_origin = [60,0,-1.7]
 omega = 0.05        # T = 2*pi/omega
 A = 5
 B = 10

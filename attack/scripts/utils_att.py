@@ -55,7 +55,7 @@ class Utils(object):
         # v_f = self.sat(self.cnt*0.02*np.array([0.,1.,0.]), 10)
         # v_m = (1-cos_beta)*v_b + (cos_beta)*v_f
         v = pos_info["mav_R"].dot(v_m)
-        v = self.sat(v, self.max_v_ibvs)
+        # v = self.sat(v, self.max_v_ibvs)  # 总速度加饱和，考虑去掉
         yaw_rate = self.k_ibvs_yaw*(image_center[0] - pos_i[0])
         
         print("v_b: {}\nv_m: {}\nv: {}".format(v_b, v_m, v))
