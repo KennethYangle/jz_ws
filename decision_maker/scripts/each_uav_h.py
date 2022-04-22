@@ -324,16 +324,21 @@ class UAVObj:
             self.path_plan()
 
         path_flag = False
-        if self.last_path == [] or self.path_pos_list == [] or len(self.last_path) != len(self.path_pos_list):
+        # if self.last_path == [] or self.path_pos_list == [] or len(self.last_path) != len(self.path_pos_list):
+        #     path_flag = True
+        # for p, q in zip(self.last_path, self.path_pos_list):
+        #     # if p != q:
+        #     if np.linalg.norm(np.array(p)-np.array(q)) > 0.1:
+        #         path_flag = True
+        #         break
+        if self.last_path == [] or self.path_pos_list == []:
             path_flag = True
-        for p, q in zip(self.last_path, self.path_pos_list):
-            # if p != q:
+        else:
+            p = self.last_path[-1]
+            q = self.path_pos_list[-1]
             if np.linalg.norm(np.array(p)-np.array(q)) > 0.1:
                 path_flag = True
-                break
         self.last_path = deepcopy(self.path_pos_list)
-        # if not path_flag:
-        #     return
 
         for nxt_pos in self.path_pos_list:
             pos_msg = PoseStamped()

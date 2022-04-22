@@ -21,15 +21,17 @@ sleep 3s
 
 # mavros and localization
 roslaunch bs_assis bs_mavros.launch  mav_id:=${MAVID} & PID1=$!
+sleep 2s
 roslaunch localization bias.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} vehicle_interval:=${VEHICLE_INTERVAL} & PID2=$!
-sleep 5s
+sleep 3s
 
 # DDS
 roslaunch bs_assis bs_dds.launch  mav_id:=${MAVID} mav_num:=${MAVNUM} & PID3=$!
-sleep 5s
+sleep 3s
 
 # RflySim显示管道和创建物体接口
 roslaunch visiualization single_rfly_obj_adder.launch mav_id:=${MAVID} ue4_ip:=${UE4IP} & PID4=$!
+sleep 2s
 roslaunch visiualization show_pipline.launch mav_id:=${MAVID} mav_x:=${MAVX} mav_y:=${MAVY} mav_z:=${MAVZ} & PID5=$!
 sleep 2s
 
