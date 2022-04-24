@@ -17,7 +17,7 @@
 
 **step 1**. 在NX里，新建一个工作空间。
 
-例如bh_ws,过程这里不详细叙述，详见ros wiki。
+例如`buaa_ws`，过程这里不详细叙述，详见ros wiki。
 
 **step 2**. 将`src.zip`复制到NX中新建的工作空间下再解压缩。
 
@@ -60,6 +60,9 @@
 **step 5**. 修改`run.sh`中的无人机数量和ue4 ip地址。
 
 ![image-20220415103354257](readme.assets/image-20220415103354257.png)
+
+修改`bs_assis/launch/bs_mavros.launch`的串口的波特率，与px4对应上
+![image-20220415103354257](readme.assets/image-20220424171708.png)
 
 **step 6**. 在Windows端仿真启动好之后，`Gps 3D Fixed`之后，在NX端 src目录下 执行一键启动脚本
 ```
