@@ -1,0 +1,8 @@
+<launch>
+   <node name="of_node" pkg="optical_flow" type="obs_zs.py" output="screen"/>
+   <!-- <node name="offboard_node" pkg="tube_control" type="obs_zs.py" output="screen"/> -->
+   <!-- <node pkg="rosbag" type="record" 
+        name="bag_record" 
+        args="/camera/left/compressed /OF_message /TTC_message /mavros/local_position/pose -o /home/wsh/data_test/test.bag"/> -->
+   <!-- <node name="offboard_node_fub" pkg="obs_flow" type="obs_bs.py" output="screen"  /> -->
+</launch>

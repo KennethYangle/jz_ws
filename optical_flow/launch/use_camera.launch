@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+  <node name="capture_publisher" pkg="optical_flow" type="capture_publisher" required="true" />
+  <node name="fake_attitude_rate_publisher" pkg="optical_flow" type="fake_attitude_rate_publisher" />
+  <node name="calc_TTC" pkg="optical_flow" type="calc_TTC" />
+</launch>

@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(swarm_msgs)
+cmake_minimum_required(VERSION 2.8.3)
+project(optical_flow)
+
+set( CMAKE_BUILD_TYPE Release )
+set( CMAKE_CXX_FLAGS "-std=c++11 -O3" )         # 添加 C++ 11 标准支持
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,14 +11,15 @@ project(swarm_msgs)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  actionlib_msgs
-  geometry_msgs
-  sensor_msgs
-  mavros_msgs
-  message_generation
+  cv_bridge
+  image_transport
   roscpp
   rospy
+  sensor_msgs
   std_msgs
+  geometry_msgs
+  swarm_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -51,18 +55,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-# Generate messages in the 'msg' folder
+## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  Action.msg
-  Pipeunit.msg
-  Pipeline.msg
-  Waypoint.msg
-  BoundingBox.msg
-  BoundingBoxes.msg
-  ObjectCount.msg
-  RflyObject.msg
-  Index.msg
+  index.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -73,18 +69,17 @@ add_message_files(
 # )
 
 ## Generate actions in the 'action' folder
-add_action_files(
-  FILES
-  CheckForObjects.action
-)
+# add_action_files(
+#   FILES
+#   Action1.action
+#   Action2.action
+# )
 
-# Generate added messages and services with any dependencies listed here
+## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  actionlib_msgs
-  sensor_msgs
+  # std_msgs#   std_msgs
   geometry_msgs
-  std_msgs
 )
 
 ################################################
@@ -117,17 +112,29 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS
-    actionlib_msgs
-    geometry_msgs
-    sensor_msgs
-    message_runtime
-    std_msgs
+#  INCLUDE_DIRS include
+#  LIBRARIES optical_flow
+#  CATKIN_DEPENDS cv_bridge image_transport roscpp rospy sensor_msgs std_msgs
+#  DEPENDS system_lib
+  CATKIN_DEPENDS message_runtime #cv_bridge image_transport roscpp rospy sensor_msgs std_msgs
 )
 
 ###########
 ## Build ##
 ###########
+
+find_package(OpenCV)
+include_directories(include ${OpenCV_INCLUDE_DIRS})
+#build my_publisher and my_subscriber
+add_executable(capture_publisher src/capture_publisher.cpp)
+target_link_libraries(capture_publisher ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(calc_TTC src/ttc.cpp)
+target_link_libraries(calc_TTC ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(fake_attitude_rate_publisher src/fake_attitude_rate_publisher.cpp)
+target_link_libraries(fake_attitude_rate_publisher ${catkin_LIBRARIES})
+
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
@@ -138,7 +145,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/swarm_msgs.cpp
+#   src/${PROJECT_NAME}/optical_flow.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -149,7 +156,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/swarm_msgs_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/optical_flow_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -175,23 +182,16 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
+# install(PROGRAMS
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-## Mark executables for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark libraries for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-# install(TARGETS ${PROJECT_NAME}
+## Mark executables and/or libraries for installation
+# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
 ## Mark cpp header files for installation
@@ -213,7 +213,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_swarm_msgs.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_optical_flow.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
