@@ -30,7 +30,7 @@ using namespace std;
 #include "swarm_msgs/Pipeline.h"
 #include <swarm_msgs/Index.h>
 #include <geometry_msgs/Point.h>
-// cv::VideoWriter vw;
+cv::VideoWriter vw;
 // cv::VideoWriter ttcw;
 // cv::VideoWriter ofw;
 // cv::VideoWriter opticalw;
@@ -673,6 +673,7 @@ void CalcTTC::imageCb(const sensor_msgs::ImageConstPtr& msg)
 
         int img_width = color.cols;
         int img_height = color.rows;
+        // cout << "img_width" << img_width << "    img_height" << img_height << endl;
 
         /**********************2022-03-12*****************/
         // cv::Mat gray, flow, cflow,color_V2;
@@ -918,7 +919,9 @@ void CalcTTC::imageCb(const sensor_msgs::ImageConstPtr& msg)
         cv::imshow(TTC_WINDOW, img_show);
         cv::waitKey(1);
         
-        // vw.write(img_show);
+        vw.write(img_show);
+        // vw.release();
+        // cv::waitKey(1);
         num++;
     }
     catch(const cv_bridge::Exception& e)
@@ -933,11 +936,11 @@ int main(int argc, char ** argv)
 {
     ros::init(argc, argv, "calc_ttc");
     CalcTTC ct;
-    // vw.open("/home/nvidia/video/out.mp4",      //路径
-    //         cv::VideoWriter::fourcc('X', '2', '6', '4'), //编码格式  fourcc('X', '2', '6', '4')  fourcc('M', 'J', 'P', 'G')
-    //         15,                                          //帧率
-    //         cv::Size(720, 405),                          // 720, 405                   //尺寸
-    //         true);
+    vw.open("/home/nvidia/video/out.mp4",      //路径
+            cv::VideoWriter::fourcc('X', '2', '6', '4'), //编码格式  fourcc('X', '2', '6', '4')  fourcc('M', 'J', 'P', 'G')
+            15,                                          //帧率
+            cv::Size(720, 405),                          // 720, 405                   //尺寸
+            true);
     // ofw.open("/home/wsh/flow_obs/src/video/of.mp4",      //路径
     //         cv::VideoWriter::fourcc('X', '2', '6', '4'), //编码格式  fourcc('X', '2', '6', '4')  fourcc('M', 'J', 'P', 'G')
     //         15,                                          //帧率

@@ -1,13 +1,11 @@
 <launch>
-   <node name="path_sender_zs" pkg="optical_flow" type="path_sender_zs"/>
-   <node name="calc_TTC" pkg="optical_flow" type="calc_TTC"/>
-   <arg name="drone_id" default="1" />
-   <arg name="drone_num" default="3" />
-   <node pkg="optical_flow" type="optical_cmd.py" name="optical_$(arg drone_id)" output="screen">
+     <arg name="drone_id" default="1" />
+     <arg name="drone_num" default="3" />
+     <node pkg="optical_flow" type="obs_zs_tube.py" name="obs_zs_$(arg drone_id)" output="screen">
         <param name="drone_id" value="$(arg drone_id)"/>
         <param name="drone_num" value="$(arg drone_num)"/>
-   </node>
-   <!-- <node name="offboard_node" pkg="optical_flow" type="optical_cmd.py" output="screen"/> -->
+     </node>
+   <!-- <node name="of_node" pkg="optical_flow" type="obs_zs.py" output="screen"/> -->
    <!-- <node name="offboard_node" pkg="tube_control" type="obs_zs.py" output="screen"/> -->
    <!-- <node pkg="rosbag" type="record" 
         name="bag_record" 

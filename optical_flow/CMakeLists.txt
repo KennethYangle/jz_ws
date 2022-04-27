@@ -56,10 +56,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  index.msg
-)
+#add_message_files(
+#  FILES
+#  index.msg
+#)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -135,6 +135,8 @@ target_link_libraries(calc_TTC ${catkin_LIBRARIES} ${OpenCV_LIBS})
 add_executable(fake_attitude_rate_publisher src/fake_attitude_rate_publisher.cpp)
 target_link_libraries(fake_attitude_rate_publisher ${catkin_LIBRARIES})
 
+add_executable(path_sender_zs src/path_test_send_zs.cpp)
+target_link_libraries(path_sender_zs ${catkin_LIBRARIES})
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations

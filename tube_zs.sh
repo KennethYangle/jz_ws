@@ -50,11 +50,13 @@ roslaunch optical_flow zs.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PI
 # sleep 1s
 
 # 打击
-roslaunch optical_flow of.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID11=$!
+roslaunch optical_flow of_tube.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID11=$!
 sleep 2s
 # roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID10=$!
 # sleep 3s
 # 管道飞行
+roslaunch optical_flow tube.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID15=$!
+sleep 5s
 
 wait
 kill -9 PID0 PID1 PID2 PID3 PID4 PID5 PID6 PID7 PID8 PID9 PID10 PID11 PID12

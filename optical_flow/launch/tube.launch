@@ -1,0 +1,10 @@
+<launch>
+   <arg name="drone_id" default="1" />
+   <arg name="drone_num" default="3" />
+   <!-- <node pkg="tube_control" type="path_sender" name="path_sender" output="screen">
+   </node> -->
+   <node pkg="optical_flow" type="main.py" name="main_$(arg drone_id)" output="screen">
+        <param name="drone_id" value="$(arg drone_id)"/>
+        <param name="drone_num" value="$(arg drone_num)"/>
+   </node>
+</launch>

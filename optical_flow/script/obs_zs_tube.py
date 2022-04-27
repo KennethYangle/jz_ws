@@ -293,8 +293,8 @@ class Px4Controller:
             print("time: {}".format(
                 rospy.Time.now().to_sec() - start_time.to_sec()))
             
-            if self.drone_id ==1:
-                self.sphere_control()
+            # if self.drone_id ==1:
+            #     self.sphere_control()
 
             cnt += 1
             if self.is_offboard == False:
@@ -357,7 +357,7 @@ class Px4Controller:
             # self.command.twist.linear.y = self.cmd_vel[1]
             # self.command.twist.linear.z = self.cmd_vel[2]
             # self.command.twist.angular.z = self.cmd_yaw
-            # self.command = self.pipeline_cmd
+            self.command = self.pipeline_cmd
             self.vel_pub.publish(self.command)
             if self.is_force == True:
                 print("mav_pos: {}".format(

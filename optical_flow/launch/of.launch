@@ -1,5 +1,11 @@
 <launch>
-   <node name="of_node" pkg="optical_flow" type="obs_zs.py" output="screen"/>
+     <arg name="drone_id" default="1" />
+     <arg name="drone_num" default="3" />
+     <node pkg="optical_flow" type="obs_zs.py" name="obs_zs_$(arg drone_id)" output="screen">
+        <param name="drone_id" value="$(arg drone_id)"/>
+        <param name="drone_num" value="$(arg drone_num)"/>
+     </node>
+   <!-- <node name="of_node" pkg="optical_flow" type="obs_zs.py" output="screen"/> -->
    <!-- <node name="offboard_node" pkg="tube_control" type="obs_zs.py" output="screen"/> -->
    <!-- <node pkg="rosbag" type="record" 
         name="bag_record" 
