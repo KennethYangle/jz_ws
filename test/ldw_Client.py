@@ -18,19 +18,19 @@ import subprocess
 
 
 BUFSIZE = 1024
-ip='192.168.1.192'
+ip='192.168.3.1'
 port=63000
 
 # rflyCMD = "C:/PX4PSP/RflySimAPIs/_High-speed/client_ue4_SITL.bat"
-clientCMD = "/home/nvidia/Programing/lwd_ws/src/attack.sh"
+clientCMD = "/home/nvidia/buaa_ws/src/test/attack.sh"
 task_time = 80
 
 # clientCMD = "roslaunch attack data_saver.launch"
-# clientCMD = "/home/nvidia/Programing/lwd_ws/src/test.sh"
+# clientCMD = "/home/nvidia/Programing/ldw/src/test.sh"
 # task_time = 10
 
 
-clientCMD_cwd = "/home/nvidia/Programing/lwd_ws"
+clientCMD_cwd = "/home/nvidia/buaa_ws"
 # pythonCMD = "cmd /k C:\\PX4PSP\\Python38\\python.exe client_grass.py"
 
 
@@ -65,15 +65,19 @@ class RflyClient():
             if data == b"Server Received":
                 print("Server Received")
                 break
+        self.client.setblocking(True)
 
     def run(self):
         while True:
-            control_word, _ = self.server.recvfrom(BUFSIZE)
+            control_word,_ = self.client.recvfrom(BUFSIZE)
             if control_word == self.D_cmd["strat"]:
+                print("strat")
                 self.start()
             elif control_word == self.D_cmd["stop"]:
+                print("stop")
                 self.stop()
             elif control_word == self.D_cmd["end"]:
+                print("end")
                 self.end()
                 break
 
@@ -117,7 +121,7 @@ class RflyClient():
 
 def main():
     RC = RflyClient(ip,port)
-    RC.wait_client()
+    RC.connect_server()
     RC.run()
 
 def test_client():
@@ -129,5 +133,5 @@ def test_client():
     RC.end()
 
 if __name__ == '__main__':
-    # main()
-    test_client()
+    main()
+    # test_client()

@@ -1,7 +1,8 @@
 <launch>
    <!-- MAVROS -->
    <arg name="mav_id" default="1" />
-   <arg name="fcu_url" default="/dev/ttyUSB0:115200"/>
+   <!-- <arg name="fcu_url" default="/dev/ttyUSB0:115200"/> -->
+   <arg name="fcu_url" default="udp://:20101@192.168.3.1:20100"/>
    <include file="$(find mavros)/launch/px4.launch">
       <arg name="fcu_url" value="$(arg fcu_url)"/>
       <arg name="gcs_url" value=""/>

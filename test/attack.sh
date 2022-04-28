@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ../devel/setup.bash
+. `pwd`/devel/setup.bash
 
 # 获取飞机ID，设置总飞机数
 # MAVID=`expr ${HOSTNAME:4:2} + 0`
@@ -21,6 +21,7 @@ sleep 3s
 
 # mavros and localization
 roslaunch bs_assis bs_mavros.launch  mav_id:=${MAVID} & PID1=$!
+sleep 2s
 roslaunch localization bias.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID2=$!
 sleep 5s
 
@@ -30,6 +31,7 @@ sleep 5s
 
 # RflySim显示管道和创建物体接口
 roslaunch visiualization single_rfly_obj_adder.launch mav_id:=${MAVID} ue4_ip:=${UE4IP} & PID4=$!
+sleep 2s
 roslaunch attack target_uav.launch mav_id:=${MAVID} mav_x:=${MAVX} mav_y:=${MAVY} mav_z:=${MAVZ} & PID5=$!
 sleep 2s
 

@@ -30,15 +30,17 @@ class DataSaver:
 
 
         save_time = time.time()
-        data_txt = "{:.3f},"+("{},"*6)[:-1]+"\n"
+        data_txt = "{:.3f},"+("{:.6f},"*9)[:-1]+"\n"
         while not rospy.is_shutdown():
             if time.time()-save_time > 0.05 and (self.local_pose_vec is not None) and (self.obj_pose_vec is not None):
                 save_time = time.time()
                 pos_vec = self.local_pose_vec
                 obj_vec = self.obj_pose_vec
+                vel_vec = self.local_vel_vec
                 # f = open("{}.txt".format(file_name),"a")
                 f.write(
                     data_txt.format(time.time(),
+                        vel_vec[0],vel_vec[1],vel_vec[2],
                         pos_vec[0],pos_vec[1],pos_vec[2],
                         obj_vec[0],obj_vec[1],obj_vec[2],
                     )

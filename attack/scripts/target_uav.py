@@ -38,7 +38,8 @@ class TargetUAV:
         self.obj_pub.publish(obj_msg)
 
     def start(self):
-        k = 0
+        # k = 0
+        k = np.random.randint(1000)
         time_interval = 0.02
         rate = rospy.Rate(1/time_interval)
         while not rospy.is_shutdown():
