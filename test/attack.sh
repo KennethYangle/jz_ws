@@ -8,10 +8,11 @@ MAVID=1
 MAVNUM=1
 # RflySim仿真参数
 UE4IP="192.168.3.1"
-MAVX="0"
-MAVY="0"
+MAVX="-250"
+MAVY="-119"
 MAVZ="0"
-
+# 硬件在环仿真和实飞为true，软件在环仿真为false
+USE_PIX=false
 echo "this MAV id :${MAVID}"
 
 
@@ -20,7 +21,7 @@ roslaunch rflysim_sensor_rospkg rgb_newprotocol_cpp.launch  & PID0=$!
 sleep 3s
 
 # mavros and localization
-roslaunch bs_assis bs_mavros.launch  mav_id:=${MAVID} & PID1=$!
+roslaunch bs_assis bs_mavros.launch  mav_id:=${MAVID} use_pix:=${USE_PIX} port1:=`expr ${MAVID} \* 2 + 20099` port2:=`expr ${MAVID} \* 2 + 20098` & PID1=$!
 sleep 2s
 roslaunch localization bias.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID2=$!
 sleep 5s

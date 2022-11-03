@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- UAV0 -->
+    <group ns="uav0">
+        <!-- MAVROS configs -->
+        <arg name="ID" value="0" />
+        <arg name="fcu_url" default="udp://:20101@192.168.3.1:20100" />
+
+        <!-- MAVROS -->
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="fcu_url" value="$(arg fcu_url)" />
+            <arg name="tgt_system" value="$(eval 1 + arg('ID'))" />
+            <arg name="tgt_component" value="1" />
+        </include>
+	
+	<!-- Control -->
+        <node pkg="standard_vtol_ctrl" name="standard_vtol_ctrl" type="standard_vtol_ctrl" output="screen">
+            <param name="target_x" type="double" value="-100.0" />
+            <param name="target_y" type="double" value="100.0" />
+            <param name="target_z" type="double" value="20.0" />
+        </node>
+    </group>
+
+</launch>

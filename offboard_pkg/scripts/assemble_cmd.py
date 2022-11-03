@@ -6,9 +6,9 @@ import numpy as np
 import os
 import json
 import rospy, rospkg
-from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import TwistStamped, Quaternion
 from swarm_msgs.msg import Action
-from mavros_msgs.msg import State, PositionTarget
+from mavros_msgs.msg import State, PositionTarget, AttitudeTarget
 from mavros_msgs.srv import CommandBool, SetMode, CommandTOL
 from geometry_msgs.msg import PoseStamped, TwistStamped
 
@@ -33,8 +33,9 @@ class Px4Controller:
         self.mav_R = np.identity(3)
 
         # mavros topics
-        self.local_pose_sub = rospy.Subscriber("mavros/local_position/pose", PoseStamped, self.local_pose_callback)
+        self.local_pose_sub = rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.local_pose_callback)
         self.local_vel_pub =  rospy.Publisher('/mavros/setpoint_raw/local', PositionTarget, queue_size=10)
+        self.local_att_pub =  rospy.Publisher('/mavros/setpoint_raw/attitude', AttitudeTarget, queue_size=10)
         self.vel_pub = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel', TwistStamped, queue_size=10)                     # 发布速度指令（重要）
         self.pos_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size=10)                        # 发布位置指令（初始化飞到厂房前使用）
         self.armService = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)                                              # 解锁服务
@@ -44,7 +45,7 @@ class Px4Controller:
 
     # 任务开始前的一些动作，包括解锁、进offboard、飞到厂房前
     def start(self):
-        for _ in range(10):
+        for _ in range(2):
             self.vel_pub.publish(self.command)
             self.arm_state = self.arm()
             self.offboard_state = self.offboard()
@@ -65,6 +66,34 @@ class Px4Controller:
                 self.vel_pub.publish(command_vel)
                 dis = np.linalg.norm(des_pos-self.mav_pos)
                 self.rate.sleep()
+
+        if self.scene == "jz":           # 拒止项目
+            self.takeoffService(altitude=100)    # 最小25m
+            rospy.loginfo("Taking off")
+            time.sleep(5)
+            self.offboard_state = self.offboard()
+            print("开始进入Offboard模式")   
+
+            while True:
+                # q = Quaternion()
+                # q.w = 0.996
+                # q.x = 0.087
+                # self.moveByAttitudeThrust(q, 0.75)
+                # print("moveByAttitudeThrust")
+                self.moveByBodyRateThrust(0, -0.1, 0, 0.75)  # 可行值：(0.5, 0, 0, 0.75)
+                print("moveByBodyRateThrust")
+                self.rate.sleep()
+
+            # des_pos = np.array([0, 35, 3.5])
+            # dis = np.linalg.norm(des_pos-self.mav_pos)
+            # command_vel = TwistStamped()
+            # while dis > 0.5:
+            #     norm_vel = (des_pos-self.mav_pos)/dis*11
+            #     command_vel.twist.linear.x,command_vel.twist.linear.y,command_vel.twist.linear.z = norm_vel
+            #     self.vel_pub.publish(command_vel)
+            #     dis = np.linalg.norm(des_pos-self.mav_pos)
+            #     print("dis: {}, norm_vel: {}".format(dis, norm_vel))
+            #     self.rate.sleep()
 
         if self.scene == "freeflight":      # test for freeflight.py
             if self.drone_id == 1:
@@ -140,6 +169,7 @@ class Px4Controller:
     # 进offboard模式
     def offboard(self):
         if self.flightModeService(custom_mode='OFFBOARD'):
+            print("Vechile Offboard Mode")
             return True
         else:
             print("Vechile Offboard failed")
@@ -167,12 +197,40 @@ class Px4Controller:
         U = U if U is not None else self.mav_pos[2]
         command_vel = construct_postarget_ENU(E, N, U, mav_yaw)
         self.local_vel_pub.publish(command_vel)
+
+    def moveByAttitudeThrust(self, q, thrust):
+        '''
+        q: geometry_msgs/Quaternion type
+        thrust: float 0-1
+        body frame: FLU, 不能控偏航, 四元数网站: https://quaternions.online/
+        '''
+        target_raw_attitude = AttitudeTarget()
+        target_raw_attitude.header.stamp = rospy.Time.now()
+        target_raw_attitude.type_mask = AttitudeTarget.IGNORE_ROLL_RATE + AttitudeTarget.IGNORE_PITCH_RATE + AttitudeTarget.IGNORE_YAW_RATE
+
+        target_raw_attitude.orientation = q
+        target_raw_attitude.thrust = thrust
+        self.local_att_pub.publish(target_raw_attitude)
+
+    def moveByBodyRateThrust(self, roll_rate, pitch_rate, yaw_rate, thrust):
+        '''
+        body frame: FLU, 不能控偏航
+        '''
+        target_raw_attitude = AttitudeTarget()
+        target_raw_attitude.header.stamp = rospy.Time.now()
+        target_raw_attitude.type_mask = AttitudeTarget.IGNORE_ATTITUDE
+
+        target_raw_attitude.body_rate.x = roll_rate
+        target_raw_attitude.body_rate.y = pitch_rate
+        target_raw_attitude.body_rate.z = yaw_rate
+        target_raw_attitude.thrust = thrust
+        self.local_att_pub.publish(target_raw_attitude)
     
     
 def construct_postarget_ENU(E=0, N=0, U=0, yaw=0, yaw_rate = 0):
     target_raw_pose = PositionTarget()
     target_raw_pose.header.stamp = rospy.Time.now()
-    
+
     '''
     uint8 FRAME_LOCAL_NED = 1
     uint8 FRAME_LOCAL_OFFSET_NED = 7
