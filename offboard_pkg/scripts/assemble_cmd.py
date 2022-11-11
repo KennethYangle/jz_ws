@@ -74,26 +74,16 @@ class Px4Controller:
             self.offboard_state = self.offboard()
             print("开始进入Offboard模式")   
 
-            while True:
-                # q = Quaternion()
-                # q.w = 0.996
-                # q.x = 0.087
-                # self.moveByAttitudeThrust(q, 0.75)
-                # print("moveByAttitudeThrust")
-                self.moveByBodyRateThrust(0, -0.1, 0, 0.75)  # 可行值：(0.5, 0, 0, 0.75)
-                print("moveByBodyRateThrust")
-                self.rate.sleep()
-
-            # des_pos = np.array([0, 35, 3.5])
-            # dis = np.linalg.norm(des_pos-self.mav_pos)
-            # command_vel = TwistStamped()
-            # while dis > 0.5:
-            #     norm_vel = (des_pos-self.mav_pos)/dis*11
-            #     command_vel.twist.linear.x,command_vel.twist.linear.y,command_vel.twist.linear.z = norm_vel
-            #     self.vel_pub.publish(command_vel)
-            #     dis = np.linalg.norm(des_pos-self.mav_pos)
-            #     print("dis: {}, norm_vel: {}".format(dis, norm_vel))
+            # while True:
+            #     # q = Quaternion()
+            #     # q.w = 0.996
+            #     # q.x = 0.087
+            #     # self.moveByAttitudeThrust(q, 0.75)
+            #     # print("moveByAttitudeThrust")
+            #     self.moveByBodyRateThrust(0, -0.1, 0, 0.75)  # 可行值：(0.5, 0, 0, 0.75)
+            #     print("moveByBodyRateThrust")
             #     self.rate.sleep()
+
 
         if self.scene == "freeflight":      # test for freeflight.py
             if self.drone_id == 1:
@@ -257,7 +247,8 @@ def construct_postarget_ENU(E=0, N=0, U=0, yaw=0, yaw_rate = 0):
 
 class Assemble:
 
-    def __init__(self, param_id):
+    def __init__(self, param_id, px4):
+        self.px4 = px4
         self.start_time = time.time()
         
         self.pipeline_cmd = TwistStamped()
@@ -266,7 +257,7 @@ class Assemble:
         self.dj_action = Action()
 
         self.Pipeline_cmd_sub = rospy.Subscriber('Pipeline_cmd', TwistStamped, self.Pipeline_cmd_callback)
-        self.DJ_cmd_sub = rospy.Subscriber('DJ_cmd', TwistStamped, self.DJ_cmd_callback)
+        self.DJ_cmd_sub = rospy.Subscriber('DJ_cmd', AttitudeTarget, self.DJ_cmd_callback)
         self.Obs_cmd_sub = rospy.Subscriber('Obs_cmd', TwistStamped, self.Obs_cmd_callback)
         self.Expect_action_sub = rospy.Subscriber('expect_action'+str(param_id), Action, self.Expect_action_callback)
         self.vel_pub = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel', TwistStamped, queue_size=10)
@@ -288,7 +279,8 @@ class Assemble:
         rate = rospy.Rate(50)
         while not rospy.is_shutdown():
             if self.dj_action.dj == True:
-                self.vel_pub.publish(self.dj_cmd)
+                # self.vel_pub.publish(self.dj_cmd)
+                self.px4.moveByAttitudeThrust(self.dj_cmd.orientation, self.dj_cmd.thrust)
             else:
                 self.vel_pub.publish(self.pipeline_cmd)
             rate.sleep()
@@ -303,6 +295,6 @@ if __name__=="__main__":
 
     # 飞机初始化，解锁、offboard、飞到厂房前
     px4 = Px4Controller(param_id, setting["SCENE"])
-    ass = Assemble(param_id)
+    ass = Assemble(param_id, px4)
     px4.start()
     ass.begin_task()

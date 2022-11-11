@@ -182,13 +182,13 @@ class Allocation:
             is_ready = self.check_ready()
             rate.sleep()
 
-        # 等待到达（应由决策触发）
-        des_pos = np.array([0,30,3.5])
-        dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
-        while dis > 1:
-            dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
-            # print("Wait... dis={}".format(dis))
-            rate.sleep()
+        # # 等待到达（应由决策触发）
+        # des_pos = np.array([0,30,3.5])
+        # dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
+        # while dis > 1:
+        #     dis = np.linalg.norm(des_pos-self.mav_pos_dic["drone_1"])
+        #     # print("Wait... dis={}".format(dis))
+        #     rate.sleep()
 
         # 1架飞机单独判断
         if self.drone_num == 1:
@@ -264,9 +264,10 @@ if __name__=="__main__":
     setting = json.load(setting_file)
     MODE = setting["MODE"]
     if MODE == "RealFlight":
-        ass = Allocation(drone_id, drone_num, setting["RealFlight"])
+        all = Allocation(drone_id, drone_num, setting["RealFlight"])
     elif MODE == "Simulation":
-        ass = Allocation(drone_id, drone_num, setting["Simulation"])
+        all = Allocation(drone_id, drone_num, setting["Simulation"])
     else:
         raise Exception("Invalid MODE!", MODE)
-    ass.begin_task()
+    print("Allocation begin_task")
+    all.begin_task()

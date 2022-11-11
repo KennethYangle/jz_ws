@@ -44,10 +44,6 @@ sleep 2s
 rosrun detection img_pub.py  & PID5=$!
 sleep 3s
 
-# 控制汇总
-roslaunch offboard_pkg assemble.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID6=$!
-sleep 2s
-
 # 决策相关
 roslaunch decision drone.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID7=$!
 sleep 1s
@@ -57,6 +53,10 @@ roslaunch attack data_saver.launch & PID11=$!
 sleep 2s
 roslaunch attack attack.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID10=$!
 sleep 3s
+
+# 控制汇总
+roslaunch offboard_pkg assemble.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM}  & PID6=$!
+sleep 2s
 
 
 wait

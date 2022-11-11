@@ -2,7 +2,7 @@
 #coding=utf-8
 
 import numpy as np
-
+from geometry_msgs.msg import Quaternion
 
 class Utils(object):
 
@@ -58,9 +58,14 @@ class Utils(object):
         # v = self.sat(v, self.max_v_ibvs)  # 总速度加饱和，考虑去掉
         yaw_rate = self.k_ibvs_yaw*(image_center[0] - pos_i[0])
         
-        print("v_b: {}\nv_m: {}\nv: {}".format(v_b, v_m, v))
-        print("yaw_rate: {}".format(yaw_rate))
-        return [v[0], v[1], v[2], yaw_rate]
+
+        q = Quaternion()
+        q.w = 0.996
+        q.x = 0.087
+        thrust = 0.75
+
+        print("q: {}\nthrust: {}\n".format(q, thrust))
+        return [q, thrust]
 
 
     def sat(self, a, maxv):

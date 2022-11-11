@@ -18,6 +18,7 @@ from mavros_msgs.srv import SetMode
 from mavros_msgs.srv import SetMavFrame
 from mavros_msgs.msg import State, RCIn, HomePosition
 from mavros_msgs.msg import Thrust
+from mavros_msgs.msg import AttitudeTarget
 from sensor_msgs.msg import Image
 from utils_att import Utils
 
@@ -29,7 +30,7 @@ mav_yaw = 0
 mav_R = np.zeros((3,3))
 pos_i = [0, 0, 0, 0, 0]
 image_failed_cnt = 0
-command = TwistStamped()
+command = AttitudeTarget()
 dj_action = Action()
 
 
@@ -112,7 +113,7 @@ if __name__=="__main__":
     rospy.Subscriber("tracker/pos_image", BoundingBoxes, pos_image_cb)
     rospy.Subscriber('expect_action'+str(param_id), Action, expect_action_cb)
 
-    local_vel_pub = rospy.Publisher('DJ_cmd', TwistStamped, queue_size=10)
+    local_vel_pub = rospy.Publisher('DJ_cmd', AttitudeTarget, queue_size=10)
     print("Publisher and Subscriber Created")
 
 
@@ -128,17 +129,15 @@ if __name__=="__main__":
             cmd = u.RotateAttackController(pos_info, pos_i, image_center)
             # 识别到图像才进行角速度控制
             if pos_i[1] > 0:
-                command.twist.linear.x = cmd[0]
-                command.twist.linear.y = cmd[1]
-                command.twist.linear.z = cmd[2]
-                command.twist.angular.z = cmd[3]
+                command.orientation = cmd[0]
+                command.thrust = cmd[1]
                 print("cmd: {}".format(cmd))
             # # 否则hover
             else:
-                command = TwistStamped()
+                command = AttitudeTarget()
         else:
-            command = TwistStamped()
-        print("command: {}".format([command.twist.linear.x, command.twist.linear.y, command.twist.linear.z, command.twist.angular.z]))
+            command = AttitudeTarget()
+        print("command: {}".format([command.orientation, command.thrust]))
         local_vel_pub.publish(command)
         rate.sleep()
     rospy.spin()

@@ -3,8 +3,8 @@
     "MODE": "Simulation",
     "SCENE": "jz",
     "Debug": {
-        "is_show_rgb": false,
-        "is_show_hsv": false
+        "is_show_rgb": true,
+        "is_show_hsv": true
     },
     "RealFlight": {
         "WIDTH": 360,
