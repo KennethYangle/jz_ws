@@ -30,11 +30,11 @@ sleep 5s
 roslaunch bs_assis bs_dds.launch  mav_id:=${MAVID} mav_num:=${MAVNUM} & PID3=$!
 sleep 5s
 
-# RflySim显示管道和创建物体接口
-roslaunch visiualization single_rfly_obj_adder.launch mav_id:=${MAVID} ue4_ip:=${UE4IP} & PID4=$!
-sleep 2s
-roslaunch attack target_uav.launch mav_id:=${MAVID} mav_x:=${MAVX} mav_y:=${MAVY} mav_z:=${MAVZ} & PID5=$!
-sleep 2s
+# # RflySim显示管道和创建物体接口
+# roslaunch visiualization single_rfly_obj_adder.launch mav_id:=${MAVID} ue4_ip:=${UE4IP} & PID4=$!
+# sleep 2s
+# roslaunch attack target_uav.launch mav_id:=${MAVID} mav_x:=${MAVX} mav_y:=${MAVY} mav_z:=${MAVZ} & PID5=$!
+# sleep 2s
 
 # # 可视化
 # roslaunch visiualization visual.launch  & PID4=$!

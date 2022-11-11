@@ -2,11 +2,6 @@
 
 REM The text start with 'REM' is annotation, the following options are corresponding to Options on CopterSim
 
-REM Set the path of the RflySim tools
-SET PSP_PATH=C:\PX4PSP
-SET PSP_PATH_LINUX=/mnt/c/PX4PSP
-C:
-
 REM Start index of vehicle number (should larger than 0)
 REM This option is useful for simulation with multi-computers
 SET /a START_INDEX=1
@@ -19,41 +14,34 @@ SET /a UDP_START_PORT=20100
 
 REM Set use DLL model name or not, use number index or name string
 REM This option is useful for simulation with other types of vehicles instead of multicopters
-set DLLModel=AircraftMathworks
-
-REM Check if DLLModel is a name string, if yes, copy the DLL file to CopterSim folder
-SET /A DLLModelVal=DLLModel
-if %DLLModelVal% NEQ %DLLModel% (
-    REM Copy the latest dll file to CopterSim folder
-    copy /Y "%~dp0"\%DLLModel%.dll %PSP_PATH%\CopterSim\external\model\%DLLModel%.dll
-)
+set DLLModel=0
 
 REM Set the simulation mode on CopterSim, use number index or name string
 REM e.g., SimMode=2 equals to  SimMode=PX4_SITL_RFLY
 set SimMode=2
 
 REM Set the vehicle-model (airframe) of PX4 SITL simulation, the default airframe is a quadcopter: iris
-REM Check folder Firmware\ROMFS\px4fmu_common\init.d-posix (or init.d/airframes) for supported airframes (Note: You can also create your airframe file here)
+REM Check folder Firmware\ROMFS\px4fmu_common\init.d-posix for supported airframes (Note: You can also create your airframe file here)
 REM E.g., fixed-wing aircraft: PX4SitlFrame=plane; small cars: PX4SitlFrame=rover
-set PX4SitlFrame=standard_plane
+set PX4SitlFrame=iris
 
 
 REM Set the map, use index or name of the map on CopterSim
 REM e.g., UE4_MAP=1 equals to UE4_MAP=Grasslands
-SET UE4_MAP=OldFactory
+SET UE4_MAP=OldFactory1
 
 REM Set the origin x,y position (m) and yaw angle (degree) at the map
-SET /a ORIGIN_POS_X=-270
-SET /a ORIGIN_POS_Y=-119
-SET /a ORIGIN_YAW=0
+SET /a ORIGIN_POS_X=-150
+SET /a ORIGIN_POS_Y=33
+SET /a ORIGIN_YAW=90
 
 REM Set the interval between two vehicle, unit:m 
-SET /a VEHICLE_INTERVAL=2
+SET /a VEHICLE_INTERVAL=1
 
 
 REM Set broadcast to other computer; 0: only this computer, 1: broadcast; or use IP address to increase speed
 REM e.g., IS_BROADCAST=0 equals to IS_BROADCAST=127.0.0.1, IS_BROADCAST=1 equals to IS_BROADCAST=255.255.255.255
-SET IS_BROADCAST=192.168.3.11
+SET IS_BROADCAST=1
 
 REM Set UDP data mode; 0: UDP_FULL, 1:UDP_Simple, 2: Mavlink_Full, 3: Mavlink_simple. input number or string
 REM e.g., UDPSIMMODE=1 equals to UDPSIMMODE=UDP_Simple
@@ -70,8 +58,8 @@ ECHO.
 ECHO ---------------------------------------
 REM Max vehicle number 50
 SET /a MAX_VEHICLE=50
-REM SET /P VehicleNum=Please input UAV swarm number:
-SET /A VehicleNum=1
+SET /P VehicleNum=Please input UAV swarm number:
+REM SET /A VehicleNum=1
 
 SET /A Evaluated=VehicleNum
 if %Evaluated% EQU %VehicleNum% (
@@ -141,8 +129,9 @@ if %cntr% EQU %endNum% goto loopEnd
 goto loopBegin
 :loopEnd
 
-
-choice /t 3 /d y /n >nul
+REM Add models and transport sensors
+cd %CURRENT_PATH%
+call %CURRENT_PATH%\AddModels.bat
 %PSP_PATH%\Python38\python.exe %CURRENT_PATH%\client_ue4.py
 
 REM Set ToolChainType 1:Win10WSL 3:Cygwin

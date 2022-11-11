@@ -74,15 +74,15 @@ class Px4Controller:
             self.offboard_state = self.offboard()
             print("开始进入Offboard模式")   
 
-            # while True:
-            #     # q = Quaternion()
-            #     # q.w = 0.996
-            #     # q.x = 0.087
-            #     # self.moveByAttitudeThrust(q, 0.75)
-            #     # print("moveByAttitudeThrust")
-            #     self.moveByBodyRateThrust(0, -0.1, 0, 0.75)  # 可行值：(0.5, 0, 0, 0.75)
-            #     print("moveByBodyRateThrust")
-            #     self.rate.sleep()
+            for i in range(10):
+                q = Quaternion()
+                q.w = 1.
+                q.x = 0.
+                self.moveByAttitudeThrust(q, 0.75)
+                print("moveByAttitudeThrust")
+                # self.moveByBodyRateThrust(0, -0.1, 0, 0.75)  # 可行值：(0.5, 0, 0, 0.75)
+                # print("moveByBodyRateThrust")
+                self.rate.sleep()
 
 
         if self.scene == "freeflight":      # test for freeflight.py

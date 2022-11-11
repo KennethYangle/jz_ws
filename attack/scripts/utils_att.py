@@ -3,6 +3,7 @@
 
 import numpy as np
 from geometry_msgs.msg import Quaternion
+from tf.transformations import quaternion_from_matrix, euler_from_matrix, quaternion_from_euler
 
 class Utils(object):
 
@@ -30,40 +31,43 @@ class Utils(object):
 
 
     def RotateAttackController(self, pos_info, pos_i, image_center):
-        #calacute nc,the first idex(c:camera,b:body,e:earth) represent the frmae, the second idex(c,o) represent the camera or obstacle
+        #calculate nc,the first idex(c:camera,b:body,e:earth) represent the frmae, the second idex(c,o) represent the camera or obstacle
         n_bc = self.R_cb.dot(self.n_cc)
         n_ec = pos_info["mav_R"].dot(n_bc)
         
-        #calacute the no
+        #calculate the no
         n_co = np.array([pos_i[0] - self.u0, pos_i[1] - self.v0, self.f], dtype=np.float64)
         n_co /= np.linalg.norm(n_co)
         n_bo = self.R_cb.dot(n_co)
         n_eo = pos_info["mav_R"].dot(n_bo)
+        
+        # calculate the v_d and a_d
+        g = [0, 0, 9.8]
+        V = np.linalg.norm(pos_info["mav_vel"])
+        v_d = (V + 1) * n_eo
+        a_d = 1.0 * (v_d - pos_info["mav_vel"])
 
-        cos_beta = n_bo.dot(n_bc)
-        v_b = n_bo*cos_beta - n_bc
-        
-        self.cnt += 1
-        # v_m[1] = v_b[1] * 0.1/(1.01-cos_beta) + self.sat(self.cnt * 0.1,10)
-        v_m = np.array([0., 0., 0.])
-        # case1: (0.02, 3, 10)
-        # case2: (0.04, 3, 12)
-        # v_m[1] = self.sat(self.cnt * self.acc_rate_ibvs, self.max_v_ibvs-2)
-        v_m[1] = self.max_v_ibvs-5
-        v_m[0] = self.k_ibvs_hor*v_b[0]
-        v_m[2] = self.sat(self.k_ibvs_ver*v_b[2], 5)
-        # v_f = self.sat(self.cnt*0.02*np.array([0.,1.,0.]), 10)
-        # v_m = (1-cos_beta)*v_b + (cos_beta)*v_f
-        v = pos_info["mav_R"].dot(v_m)
-        # v = self.sat(v, self.max_v_ibvs)  # 总速度加饱和，考虑去掉
-        yaw_rate = self.k_ibvs_yaw*(image_center[0] - pos_i[0])
-        
+        # calculate R_d
+        r1 = pos_info["mav_vel"] / V
+        a_w1 = r1.dot(a_d - g)      # 标量
+        a_n = a_d - g - a_w1 * r1   # 矢量
+        a_w3 = -np.linalg.norm(a_n) # 标量
+        r3 = a_n / a_w3
+        r2 = np.cross(r3, r1)
+        R = np.array([r1 ,r2, r3]).T
+        M = np.identity(4)
+        M[:3,:3] = R
+        # q_array = quaternion_from_matrix(M)
+        euler = euler_from_matrix(M)
+        q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/12, euler[2])
 
         q = Quaternion()
-        q.w = 0.996
-        q.x = 0.087
+        # q.w = 0.996
+        # q.x = 0.087
+        q.x, q.y, q.z, q.w = q_array[0], q_array[1], q_array[2], q_array[3]
         thrust = 0.75
 
+        print("v_d: {}\nv: {}\n".format(v_d, pos_info["mav_vel"]))
         print("q: {}\nthrust: {}\n".format(q, thrust))
         return [q, thrust]
 
