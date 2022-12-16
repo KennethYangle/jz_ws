@@ -7,8 +7,8 @@
 MAVID=1
 MAVNUM=1
 # RflySim仿真参数
-UE4IP="192.168.3.1"
-MAVX="-250"
+UE4IP="192.168.31.42"
+MAVX="-270"
 MAVY="-119"
 MAVZ="0"
 # 硬件在环仿真和实飞为true，软件在环仿真为false
@@ -17,7 +17,9 @@ echo "this MAV id :${MAVID}"
 
 
 # RflySim ROS接口
-roslaunch rflysim_sensor_rospkg rgb_newprotocol_cpp.launch  & PID0=$!
+# roslaunch rflysim_sensor_rospkg rgb_newprotocol_cpp.launch  & PID0=$!
+# roslaunch rflysim_sensor_rospkg infrared_newprotocol_cpp.launch  & PID0=$!
+rosrun RflySimClient server_ue4.py  & PID0=$!
 sleep 3s
 
 # mavros and localization
@@ -30,11 +32,11 @@ sleep 5s
 roslaunch bs_assis bs_dds.launch  mav_id:=${MAVID} mav_num:=${MAVNUM} & PID3=$!
 sleep 5s
 
-# # RflySim显示管道和创建物体接口
-# roslaunch visiualization single_rfly_obj_adder.launch mav_id:=${MAVID} ue4_ip:=${UE4IP} & PID4=$!
-# sleep 2s
-# roslaunch attack target_uav.launch mav_id:=${MAVID} mav_x:=${MAVX} mav_y:=${MAVY} mav_z:=${MAVZ} & PID5=$!
-# sleep 2s
+# RflySim显示管道和创建物体接口
+roslaunch visiualization single_rfly_obj_adder.launch mav_id:=${MAVID} ue4_ip:=${UE4IP} & PID4=$!
+sleep 2s
+roslaunch attack target_uav.launch mav_id:=${MAVID} mav_x:=${MAVX} mav_y:=${MAVY} mav_z:=${MAVZ} & PID5=$!
+sleep 2s
 
 # # 可视化
 # roslaunch visiualization visual.launch  & PID4=$!

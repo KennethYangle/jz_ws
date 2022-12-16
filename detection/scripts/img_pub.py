@@ -89,7 +89,9 @@ if __name__ == '__main__':
 
     global bridge
     bridge = CvBridge()
-    rospy.Subscriber('/camera/rgb', Image, image_callback)
+    # rospy.Subscriber('/rflysim/sensor0/img_rgb', Image, image_callback)
+    rospy.Subscriber('/rflysim/sensor1/img_infrared', Image, image_callback)
+    # rospy.Subscriber('/camera/rgb', Image, image_callback)
     # rospy.Subscriber('/camera/rgb/compressed', CompressedImage, image_callback)
     imag_pub = rospy.Publisher("tracker/pos_image", BoundingBoxes, queue_size=10)  # 发送图像位置
 

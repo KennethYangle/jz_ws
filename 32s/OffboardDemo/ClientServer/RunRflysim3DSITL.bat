@@ -40,8 +40,8 @@ set PX4SitlFrame=standard_plane
 
 REM Set the map, use index or name of the map on CopterSim
 REM e.g., UE4_MAP=1 equals to UE4_MAP=Grasslands
-SET UE4_MAP=OldFactory
-REM SET UE4_MAP=Changsha
+REM SET UE4_MAP=OldFactory
+SET UE4_MAP=Changsha
 
 REM Set the origin x,y position (m) and yaw angle (degree) at the map
 SET /a ORIGIN_POS_X=-270
@@ -134,7 +134,7 @@ set /a portNum=%UDP_START_PORT%+((%START_INDEX%-1)*2)
 :loopBegin
 set /a PosXX=((%cntr%-1) / %sqrtNum%)*%VEHICLE_INTERVAL% + %ORIGIN_POS_X%
 set /a PosYY=((%cntr%-1) %% %sqrtNum%)*%VEHICLE_INTERVAL% + %ORIGIN_POS_Y%
-start /high CopterSim.exe 1 %cntr% %portNum% %DLLModel% %SimMode% %UE4_MAP% %IS_BROADCAST% %PosXX% %PosYY% %ORIGIN_YAW% 1 %UDPSIMMODE%
+start /realtime CopterSim.exe 1 %cntr% %portNum% %DLLModel% %SimMode% %UE4_MAP% %IS_BROADCAST% %PosXX% %PosYY% %ORIGIN_YAW% 1 %UDPSIMMODE%
 choice /t 1 /d y /n >nul
 set /a cntr=%cntr%+1
 set /a portNum=%portNum%+2

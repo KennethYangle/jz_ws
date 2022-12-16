@@ -6,12 +6,13 @@ import rospy
 from swarm_msgs.msg import Pipeline,RflyObject
 
 copterID = 10000
-vehicleType = 152   # red ball
+# vehicleType = 152   # red ball
+vehicleType = 400   # tank
 MotorRPMSMean = 0
 # target_origin = [25,0,-2]
 # omega = 0.2          # T = 2*pi/omega
-target_origin = [120,0,-1.7]
-omega = 0.1        # T = 2*pi/omega
+target_origin = [25,0,-1.7]
+omega = 0        # T = 2*pi/omega
 A = 5
 B = 10
 

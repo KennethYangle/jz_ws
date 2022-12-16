@@ -99,7 +99,11 @@ class reqVeCrashData:
         self.MotorRPMS=[0,0,0,0,0,0,0,0]
         self.ray=[0,0,0,0,0,0]
         self.CrashedName=''
+        self.hasUpdate=True
     def __init__(self,iv):
+        self.copyData(iv)
+        
+    def copyData(self,iv):
         self.checksum=iv[0]
         self.copterID=iv[1]
         self.vehicleType=iv[2]
@@ -112,8 +116,9 @@ class reqVeCrashData:
         self.AngEuler=iv[17:20]
         self.MotorRPMS=iv[20:28]
         self.ray=iv[28:34]
-        self.CrashedName=iv[34].decode('UTF-8')
-        
+        self.CrashedName=iv[34].decode('UTF-8')  
+        self.CrashedName=self.CrashedName.strip(b'\x00'.decode())
+        self.hasUpdate=True      
 # 注意:本条消息会发送给指定远端电脑的端口20005
 # struct RflyTimeStmp{
 #     int checksum; //校验位，取123456789
@@ -137,7 +142,85 @@ class PX4ExtMsg:
         self.runnedTime=0
         self.controls=[0,0,0,0,0,0,0,0]   
 
+
+class  CoptReqData: #长度64, 2i12f1d
+    def __init__(self):
+        self.checksum = 0 # 1234567891作为校验
+        self.CopterID = 0 #飞机ID
+        self.PosUE = [0,0,0]
+        self.angEuler = [0,0,0]
+        self.boxOrigin = [0,0,0]
+        self.BoxExtent = [0,0,0]
+        self.timestmp = 0
+        self.hasUpdate=True
+    def __init__(self,iv):
+        self.CopyData(iv)
+        
+    def CopyData(self,iv):
+        self.checksum = iv[0]
+        self.CopterID = iv[1]
+        self.PosUE = iv[2:5]
+        self.angEuler = iv[5:8]
+        self.boxOrigin = iv[8:11]
+        self.BoxExtent = iv[11:14]
+        self.timestmp = iv[14]
+        self.hasUpdate=True
+
+class  ObjReqData: #长度96, 2i12f1d32s
+    def __init__(self):
+        self.checksum = 0 # 1234567891作为校验
+        self.seqID = 0
+        self.PosUE = [0,0,0]
+        self.angEuler = [0,0,0]
+        self.boxOrigin = [0,0,0]
+        self.BoxExtent = [0,0,0]
+        self.timestmp = 0
+        self.ObjName=''
+        self.hasUpdate=True
+    def __init__(self,iv):
+        self.CopyData(iv)
+        
+    def CopyData(self,iv):
+        self.checksum = iv[0]
+        self.seqID = iv[1]
+        self.PosUE = iv[2:5]
+        self.angEuler = iv[5:8]
+        self.boxOrigin = iv[8:11]
+        self.BoxExtent = iv[11:14]
+        self.timestmp = iv[14]
+        self.ObjName =  iv[15].decode('UTF-8') 
+        self.ObjName=self.ObjName.strip(b'\x00'.decode())
+
+        self.hasUpdate=True
        
+class CameraData: #长度56, 5i7f1d
+    def __init__(self):
+        self.checksum = 0 #1234567891作为校验
+        self.SeqID = 0
+        self.TypeID = 0
+        self.DataHeight = 0
+        self.DataWidth = 0
+        self.CameraFOV = 0
+        self.PosUE = [0,0,0]
+        self.angEuler = [0,0,0]
+        self.timestmp = 0 
+        self.hasUpdate=True
+       
+    def __init__(self,iv):
+        self.CopyData(iv)
+        
+    def CopyData(self,iv):        
+        self.checksum = iv[0]
+        self.SeqID = iv[1]
+        self.TypeID = iv[2]
+        self.DataHeight = iv[3]
+        self.DataWidth = iv[4]
+        self.CameraFOV = iv[5]
+        self.PosUE = iv[6:9]
+        self.angEuler = iv[9:12]
+        self.timestmp = iv[12] 
+        self.hasUpdate=True
+                
 class EarthModel():
     def __init__(self):
         self.wgs84_a = 6378137
@@ -355,8 +438,11 @@ class PX4MavCtrler:
         self.udp_socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create socket
         self.udp_socketUDP.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1) 
         self.udp_socketTrue = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create socket
+        self.udp_socketTrue.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         self.udp_socketPX4 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create socket
+        self.udp_socketPX4.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         self.udp_socketUE4 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create socket
+        self.udp_socketUE4.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         
         self.ip = ip  # IP address and port number to send data
         self.port = port
@@ -385,7 +471,7 @@ class PX4MavCtrler:
         self.trueGpsUeCenter=[40.1540302,116.2593683,50]
         self.GpsOriOffset=[0,0,0]
         self.uavThrust=0
-        
+        self.zInt=0
         self.EnList = [0,1,0,0,0,1]
         self.type_mask = self.TypeMask(self.EnList)
         self.coordinate_frame = mavlink2.MAV_FRAME_BODY_NED
@@ -410,7 +496,6 @@ class PX4MavCtrler:
         
         self.inSilVect = []
         self.inReqVect = []
-        self.inReqUpdateVect=[]
         
         self.stopFlagUE4=True
         
@@ -440,6 +525,9 @@ class PX4MavCtrler:
         
         self.geo = EarthModel()
         
+        self.CoptDataVect=[]
+        self.ObjDataVect=[]
+        self.CamDataVect=[]
         
     def sendStartMsg(self,copterID=-1):
         """ send start signals to the network for copters calling waitForStartMsg()
@@ -628,15 +716,15 @@ class PX4MavCtrler:
             self.uavTimeStmp=time.time()
             self.trueTimeStmp=time.time()
             
-            sendUE4Msg=True
+            isSendUe4msg=True
             if self.CopterID>4:
-                sendUE4Msg=False
+                isSendUe4msg=False
                 iNum=iNum+1
                 if iNum%3==0:
-                    sendUE4Msg=True
+                    isSendUe4msg=True
             # if vehicle number<=4, send UE4 msg with 100Hz
             # if vehicle number is too large, send UE4 msg with 33Hz to save network
-            if sendUE4Msg:
+            if isSendUe4msg:
                 # Send vehicle to UE4
                 #sendUE4PosNew(self,copterID,vehicleType,PosE,AngEuler,Vel,PWMs,runnedTime
                 runnedTime = time.time()-self.startTime
@@ -669,7 +757,7 @@ class PX4MavCtrler:
         self.udp_socketTrue.close()
         
         time.sleep(0.5)
-        self.stopFlagPX4Data=True;
+        self.stopFlagPX4Data=True
         self.tPX4.join()
         self.udp_socketPX4.close()
         
@@ -756,17 +844,62 @@ class PX4MavCtrler:
                     isCopterExist=False
                     iValue=struct.unpack('4i1d29f20s',buf[0:160])
                     if(iValue[0]==1234567897):
-                        vsr=reqVeCrashData(iValue)
                         #print(vsr.copterID,vsr.vehicleType)
                         for i in range(len(self.inReqVect)): #遍历数据列表，飞机ID有没有出现过
                             if self.inReqVect[i].copterID == iValue[1]: #如果出现过，就直接更新数据
                                 isCopterExist=True
-                                self.inReqVect[i]=copy.deepcopy(vsr)
-                                self.inReqUpdateVect[i]=True
+                                self.inReqVect[i].CopyData(iValue) #=copy.deepcopy(vsr)
+                                #self.inReqUpdateVect[i]=True
+                                break
                                 #break
                         if not isCopterExist:#如果没有出现过，就创建一个结构体
+                            vsr=reqVeCrashData(iValue)
                             self.inReqVect = self.inReqVect +  [copy.deepcopy(vsr)] #扩充列表，增加一个元素
-                            self.inReqUpdateVect = self.inReqUpdateVect +[True]
+                            #self.inReqUpdateVect = self.inReqUpdateVect +[True]
+                
+                if len(buf)==56: #CameraData: #长度56, 5i7f1d
+                    #print('hello')
+                    iValue=struct.unpack('5i7f1d',buf[0:56])
+                    if iValue[0]==1234567891:
+                        isDataExist=False
+                        # 按SeqID来构建相机列表
+                        for i in range(len(self.CamDataVect)): #遍历数据列表，相机ID有没有出现过
+                            if self.CamDataVect[i].SeqID == iValue[1]: #如果出现过，就直接更新数据
+                                self.CamDataVect[i].CopyData(iValue)
+                                isDataExist=True
+                                break
+                        if not isDataExist: #如果没有出现过，就创建一个结构体
+                            vsr=CameraData(iValue)
+                            self.CamDataVect = self.CamDataVect +  [copy.deepcopy(vsr)] #扩充列表，增加一个元素
+                
+                if len(buf)==64: #CoptReqData: #长度64, 2i12f1d
+                    iValue=struct.unpack('2i12f1d',buf[0:64])
+                    if iValue[0]==1234567891:
+                        isDataExist=False
+                        # 按CopterID来构建物体飞机
+                        for i in range(len(self.CoptDataVect)): #遍历数据列表，飞机ID有没有出现过
+                            if self.CoptDataVect[i].CopterID == iValue[1]: #如果出现过，就直接更新数据
+                                self.CoptDataVect[i].CopyData(iValue)
+                                isDataExist=True
+                                break
+                        if not isDataExist: #如果没有出现过，就创建一个结构体
+                            vsr=CoptReqData(iValue)
+                            self.CoptDataVect = self.CoptDataVect +  [copy.deepcopy(vsr)] #扩充列表，增加一个元素
+
+                if len(buf)==96: #ObjReqData: #长度96, 2i12f1d32s
+                    iValue=struct.unpack('2i12f1d32s',buf[0:96])
+                    if iValue[0]==1234567891:
+                        isDataExist=False
+                        #按reqID来构建物体列表
+                        for i in range(len(self.ObjDataVect)): #遍历数据列表，物体ID有没有出现过
+                            if self.ObjDataVect[i].seqID == iValue[1]: #如果出现过，就直接更新数据
+                                self.ObjDataVect[i].CopyData(iValue)
+                                isDataExist=True
+                                break
+                        if not isDataExist: #如果没有出现过，就创建一个结构体
+                            vsr=ObjReqData(iValue)
+                            self.ObjDataVect = self.ObjDataVect +  [copy.deepcopy(vsr)] #扩充列表，增加一个元素 
+               
                             
                 self.trueMsgEvent.set()
 
@@ -776,7 +909,45 @@ class PX4MavCtrler:
                 break
             
         
-
+    def getCamCoptObj(self,type=1,objName=1):
+        # type=0表示相机，1表示飞机，2表示物体
+        # 相机时，objName对应相机seqID；飞机时，objName对应CopterID；物体时，objName对应物体名字
+        if type==0:
+            for i in range(len(self.CamDataVect)): #遍历数据列表，相机ID有没有出现过
+                if self.CamDataVect[i].SeqID == objName:
+                    return self.CamDataVect[i]
+            
+        if type==1:
+            for i in range(len(self.CoptDataVect)): #遍历数据列表，飞机ID有没有出现过
+                if self.CoptDataVect[i].CopterID == objName:
+                    return self.CoptDataVect[i]
+        
+        if type ==2:
+            for i in range(len(self.ObjDataVect)): #遍历数据列表，物体ID有没有出现过
+                if self.ObjDataVect[i].ObjName == objName :
+                    return self.ObjDataVect[i]
+        return 0
+    
+    def reqCamCoptObj(self,type=1,objName=1,windowID=0):
+        # type=0表示相机，1表示飞机，2表示物体
+        # 相机时，objName对应相机seqID；飞机时，objName对应CopterID；物体时，objName对应物体名字
+        # windowID 表示想往哪个RflySim3D发送消息，默认是0号窗口
+        
+        #RflyReqObjData(int opFlag, FString objName, FString colorflag)函数命令
+        # opFlag 0创建相机，1创建飞机，2创建物体
+        
+        if isinstance(objName,list):
+            for i in range(len(objName)):
+                val = objName[i]
+                cmd = 'RflyReqObjData %d %s %d' % (type,str(val),0)
+                self.sendUE4Cmd(cmd.encode(),windowID)
+                time.sleep(0.1)
+        else:
+            cmd = 'RflyReqObjData %d %s %d' % (type,str(objName),0)
+            print(cmd)
+            self.sendUE4Cmd(cmd.encode(),windowID)               
+                        
+    
     def InitMavLoop(self,UDPMode=2):
         """ Initialize MAVLink listen loop from CopterSim
             0 and 1 for UDP_Full and UDP_Simple Modes, 2 and 3 for MAVLink_Full and MAVLink_Simple modes, 4 for MAVLink_NoSend
@@ -918,6 +1089,40 @@ class PX4MavCtrler:
                 self.the_connection.mav.set_attitude_target_send(int(time_boot_ms),self.the_connection.target_system,
                                                                         self.the_connection.target_component,type_mask,
                                                                         [yawrate,pos[0],pos[1],pos[2]],vel[0],  vel[1], vel[2],yaw)                                  
+            
+            elif self.offMode==3: 
+            
+                desiredAlt  = yaw
+                currAlt = self.uavPosNED[2]
+                dAlt = (desiredAlt -currAlt)/5.0
+                dAlt = self.sat(dAlt,0.5)
+                self.zInt = self.zInt - dAlt*0.001
+                
+                if self.zInt >0.8:
+                    self.zInt=0.8
+                    
+                if self.zInt<0:
+                    self.zInt=0
+                
+                dvel = self.uavVelNED[2]/2.0
+                dvel = self.sat(dvel,0.5)
+                
+                dAlt = -dAlt*1 + dvel*1
+                
+                dAlt = self.sat(dAlt,0.5)
+                
+                dThr = self.zInt + dAlt
+            
+                if dThr>1:
+                    dThr=1
+                
+                if dThr<0:
+                    dThr=0
+                
+                self.the_connection.mav.set_attitude_target_send(int(time_boot_ms),self.the_connection.target_system,
+                                                                        self.the_connection.target_component,type_mask,
+                                                                        [yawrate,pos[0],pos[1],pos[2]],vel[0],  vel[1], vel[2],dThr)        
+        
         else:
             if self.UDPMode>1.5:
                 if self.offMode==0:
@@ -938,6 +1143,39 @@ class PX4MavCtrler:
                     buf = self.mav0.set_attitude_target_encode(int(time_boot_ms),self.the_connection.target_system,
                                                                         self.the_connection.target_component,type_mask,
                                                                         [yawrate,pos[0],pos[1],pos[2]],vel[0],  vel[1], vel[2],yaw).pack(self.mav0)   
+                elif self.offMode==3: 
+                    
+                    desiredAlt  = yaw
+                    currAlt = self.uavPosNED[2]
+                    dAlt = (desiredAlt -currAlt)/5.0
+                    dAlt = self.sat(dAlt,0.5)
+                    self.zInt = self.zInt - dAlt*0.001
+                    
+                    if self.zInt >0.8:
+                        self.zInt=0.8
+                        
+                    if self.zInt<0:
+                        self.zInt=0
+                    
+                    dvel = self.uavVelNED[2]/2.0
+                    dvel = self.sat(dvel,0.5)
+                    
+                    dAlt = -dAlt*1 + dvel*1
+                    
+                    dAlt = self.sat(dAlt,0.5)
+                    
+                    dThr = self.zInt + dAlt
+                
+                    if dThr>1:
+                        dThr=1
+                    
+                    if dThr<0:
+                        dThr=0
+                    
+                    buf = self.mav0.set_attitude_target_encode(int(time_boot_ms),self.the_connection.target_system,
+                                                                        self.the_connection.target_component,type_mask,
+                                                                        [yawrate,pos[0],pos[1],pos[2]],vel[0],  vel[1], vel[2],dThr).pack(self.mav0) 
+                    
                 self.udp_socket.sendto(buf, (self.ip, self.port))
             else:
                 # UDP_Full Mode
@@ -1081,6 +1319,40 @@ class PX4MavCtrler:
                 self.udp_socket.sendto(buf, ('127.0.0.1', 20010+windowID)) #ensure this PC can reciver message under specify IP mode
             self.udp_socket.sendto(buf, (self.ip, 20010+windowID)) #specify PC's IP to send
 
+    def sendUE4LabelID(self,CopterID=0,Txt='',fontSize=30,RGB=[255,0,0],windowID=-1):
+        dispTime=1
+        dispFlag=0
+        #dispFlag =0 且 dispTime>=0 表示更新ID行（第0行数据）
+        self.sendUE4LabelMsg(CopterID,Txt,fontSize,RGB,dispTime,dispFlag,windowID)
+        
+    def sendUE4LabelMsg(self,CopterID=0,Txt='',fontSize=30,RGB=[255,0,0],dispTime=0,dispFlag=-1,windowID=-1):
+        # struct CopterMsg {
+        # int checksum; //校验位，这里必须设定为1234567899
+        # int CopterID; //飞机的ID号，具体显示哪一个飞机。注意，如果CopterID<=0，则所有飞机都显示消息；如果CopterID大于0，则对应飞机显示消息
+        # int dispFlag;//显示需要，如果flag<0，则消息会逐层累加，最多显示5条消息；如果flag=0，会清理所有消息；如果flag>0，则会更新对应的消息；如果flag大于当前消息总数，则消息顺延在末尾。
+        # int RGB[3];//RGB的颜色，0~255，分别表示红、绿、蓝
+        # float dispTime;//消失时间（单位秒）。如果<0，则立刻消失；如果=0，则永远显示；如果>0,则设定秒数后消失
+        # float fontSize;//字体大小；默认是20；
+        # char data[120];//显示的文字。
+        # };6i2f120s
+        #dispFlag <0 且 dispTime>=0 表示依次累加的方式添加消息
+        #dispFlag <0 且 dispTime<0 表示清空所有消息
+        #dispFlag =0 且 dispTime>=0 表示更新ID行（第0行数据）
+        #dispFlag >=1 and <5 表示更新1到5行的消息，注意此时dispTime<0会删除本消息，若>=0会更新消息
+        # dispFlag>当前消息数，则切换到累加模式
+        data=Txt.encode('UTF-8')
+        buf = struct.pack("6i2f120s",1234567899,CopterID,dispFlag,*RGB,dispTime,fontSize,data)
+        if windowID<0:
+            if self.ip=='127.0.0.1':
+                for i in range(6):
+                    self.udp_socket.sendto(buf, (self.ip, 20010+i))
+            else:
+                self.udp_socket.sendto(buf, ('224.0.0.10', 20009)) #multicast address, send to all RflySim3Ds on all PC in LAN
+        else:
+            if self.ip!='127.0.0.1' and self.ip!='255.255.255.255':
+                self.udp_socket.sendto(buf, ('127.0.0.1', 20010+windowID)) #ensure this PC can reciver message under specify IP mode
+            self.udp_socket.sendto(buf, (self.ip, 20010+windowID)) #specify PC's IP to send        
+        
 
     def sendUE4Attatch(self,CopterIDs,AttatchIDs,AttatchTypes,windowID=-1):
         """ Send msg to UE4 to attach a vehicle to another (25 vehicles);
@@ -1275,12 +1547,12 @@ class PX4MavCtrler:
         #     int checksum;//1234567894
         #     int CopterID;
         #     double runnedTime; //Current  stamp (s)
-        #     float ExtToUE4[16];
+        #     double ExtToUE4[16];
         # }
         #struct.pack 2i1d16f
         runnedTime = time.time()-self.startTime
         checkSum=1234567894
-        buf = struct.pack("2i1d16f",checkSum,copterID,runnedTime,*ActExt)
+        buf = struct.pack("2i1d16d",checkSum,copterID,runnedTime,*ActExt)
         if windowID<0:
             if self.ip=='127.0.0.1':
                 for i in range(6):
@@ -1457,7 +1729,7 @@ class PX4MavCtrler:
         self.yawrate = yawrate
 
     # send velocity control signal in body front-right-down (FRD) frame
-    def SendAttPX4(self,att=[0,0,0,0],thrust=0.5,CtrlFlag=0):
+    def SendAttPX4(self,att=[0,0,0,0],thrust=0.5,CtrlFlag=0,AltFlg=0):
         """ Send vehicle targe attitude to PX4 in the body forward-rightward-downward (FRD) frame 
         """
         #CtrlFlag is a flag to determine the definition of input att
@@ -1467,12 +1739,21 @@ class PX4MavCtrler:
         #CtrlFlag 3 : att is a 3D vector for rotation rate, roll,pitch,yaw, unit is rad/s
         #CtrlFlag 4 : att is a 3D vector for rotation rate, roll,pitch,yaw, unit is degree/s
         
+        # if AltFlg ==0
         # thrust is defined as "Collective thrust, normalized to 0 .. 1 (-1 .. 1 for vehicles capable of reverse trust)" from PX4 web
+        # if AltFlg > 0
+        # thrust is the desired Altitude
         
         # https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET
         self.offMode=2 # SET_ATTITUDE_TARGET
         self.EnList = [0,0,0,0,0,0]
-        
+        if self.uavThrust<0.5:
+            self.zInt=0.5
+        else:
+            self.zInt= self.uavThrust
+        if AltFlg>0.5:
+            self.offMode=3 # SET_ATTITUDE_TARGET, with desired altitude
+
         y=int(0)
         if CtrlFlag<3: # Ignore body rate
             y = y | 7
@@ -1584,6 +1865,22 @@ class PX4MavCtrler:
         self.yawrate = 0
         self.yaw = yaw
 
+    # send target position in earth NED frame
+    def SendVelYawAlt(self,vel=10,yaw=6.28,alt=-100):
+        """ Send vehicle targe position (m) to PX4 in the earth north-east-down (NED) frame with yaw control (rad)
+        when the vehicle fly above the ground, then z < 0
+        """
+        if abs(yaw)<0.00001:
+            yaw = 6.28
+        self.offMode=0 # SET_POSITION_TARGET_LOCAL_NED
+        self.type_mask=int("000111000000", 2)
+        self.coordinate_frame = 1
+        self.pos=[0,0,alt]
+        self.vel = [yaw,vel,0]
+        self.acc = [0, 0, 0]
+        self.yawrate = 0
+        self.yaw = yaw
+        
     # send target position in earth NED frame
     def SendPosGlobal(self,lat=0,lon=0,alt=0,yawValue=0,yawType=0):
         """ Send vehicle targe position (m) to PX4 in the earth north-east-down (NED) frame with yaw control (rad)
@@ -2585,7 +2882,7 @@ class UEMapServe:
             m_readData[i] = float(m_readData[i])
         #print(m_readData)
         rowmap = cv2.imread(fileLocPng,cv2.IMREAD_ANYDEPTH)
-        rowmap.astype(np.float32)
+        rowmap=rowmap.astype(np.float32)
         rowmap = rowmap-32768
         rows=np.size(rowmap,0)
         columns=np.size(rowmap,1)
