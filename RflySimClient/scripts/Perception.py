@@ -356,7 +356,7 @@ class Perception:
                           " not belong same vehicle")
                     sys.exit(0)
                 else:
-                    self.pairs[self.rgb_camera[str(pairs[0])]] = pairs
+                    self.pairs[str(self.rgb_camera[str(pairs[0])])] = pairs
 
     def AddObj(self, objs_id):
         if isinstance(objs_id, list):
@@ -488,18 +488,23 @@ class Perception:
                         # print("posUE ", r_obj.PosUE,
                         #   "angle : ", r_obj.angEuler)
                         obj.hasUpdate = True
-                        if(str(obj.id) in self.drones[str(obj.belong_copter)].infrareds.keys()):
+                        # if(str(obj.id) in self.drones[str(obj.belong_copter)].infrareds.keys()):
+                        #print("obj_id: ", str(obj.seq_id))
+                        if(str(obj.seq_id) in self.rgb_camera.keys()):
                             # 同步更新云台上的红外相机参数
+                            
+                            inf_id = self.pairs[str(obj.belong_copter)][1]
+                            #print("rgb_id: ",obj.id, " inf_id: ", inf_id, "angEuler: ",r_obj.angEuler)
                             self.drones[str(obj.belong_copter)].infrareds[str(
-                                obj.id)].position = list(r_obj.PosUE)
+                                inf_id)].position = list(r_obj.PosUE)
                             self.drones[str(obj.belong_copter)].infrareds[str(
-                                obj.id)].orientation = list(r_obj.angEuler)
+                                inf_id)].orientation = list(r_obj.angEuler)
                             # print("cam, angle: ", r_obj.angEuler,
                             #       " degree: ", np.array(r_obj.angEuler) / math.pi * 180)
                             self.drones[str(obj.belong_copter)].infrareds[str(
-                                obj.id)].UpdateMatrix()
+                                inf_id)].UpdateMatrix()
                             self.drones[str(obj.belong_copter)].infrareds[str(
-                                obj.id)].hasUpdate = True
+                                inf_id)].hasUpdate = True
                             # print("update camera pose")
                         continue
                     obj.bounding_box = copy.deepcopy(r_obj.BoxExtent)

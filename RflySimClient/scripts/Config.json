@@ -9,7 +9,7 @@
             "DataHeight":480,
             "DataCheckFreq":30,
             "SendProtocol":[0,192,168,3,56,9999,0,0],
-            "CameraFOV":60,
+            "CameraFOV":90,
             "SensorPosXYZ":[11,0,2],
             "SensorAngEular":[0,0,0],
             "MaxRotation":[0,0,0],

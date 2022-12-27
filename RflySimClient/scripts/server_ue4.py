@@ -34,11 +34,12 @@ mav.sendUE4PosScale(106, 3, 0, [50, -20, -10], [0, 0, 0], [5, 5, 5])
 mav.sendUE4PosScale(77, 400, 0, [75,0,-1.7], [0,0,0], [1, 1, 1])
 perception = Perception.Perception(mav, vis)
 perception.AddDrones(2)
-perception.AddObj(106)
-perception.AddObj(77)
-perception.ReqRfySim()
+perception.AddObj([106,77])
+#perception.AddObj(77)
 pair = (0, 1)
 perception.PTZCameraPair(pair)
+perception.ReqRfySim()
+
 perception.StartCaptureImg()
 
 
