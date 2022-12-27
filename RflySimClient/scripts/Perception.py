@@ -141,8 +141,9 @@ class Camera(Obj):
         self.data_time = 0
         self.internal_matrix = []  # 相机内参矩阵,仿真没有畸变
         self.insight_obj = []  # 用来存取当前相机内的目标编号
-        self.mean = 0  # 高斯噪声均值
-        self.sigma = 50
+        self.s_p = 0.2  # zhao
+        self.amount = 0.04
+        self.noise_p = self.s_p * self.amount
         self.half_w = self.data_width/2
         self.half_h = self.data_height/2
         self.rate = sensor.DataCheckFreq
@@ -596,7 +597,7 @@ class Perception:
     def GetImg(self, copter_id, camera_id) -> list:
         '''
             copter_id: 需要获取相机图像的飞机
-            camera_id: 需要获取的相机图像,这里的编号是当前飞机给予的编号
+            camera_id: 需要获取的相机图像id
             为减少计算,只有在需要图像数据的时候才拷贝图像
         '''
         if str(copter_id) in self.drones.keys():
@@ -687,12 +688,16 @@ class Perception:
                         self.Imaging('obj', drone.infrareds[str(
                             camera_id)], obj_seqId, obj_img, img_w, img_h)
 
+                img = np.zeros((img_h, img_w), np.uint8)
                 # 给图像添加噪声
-                gauss = (np.random.normal(drone.infrareds[str(
-                    camera_id)].mean, drone.infrareds[str(camera_id)].sigma, (img_h, img_w))).astype(np.int8)
-                img = np.zeros((img_h, img_w), np.int8)
-                img = (img + gauss)
-                img = np.clip(img, a_min=0, a_max=255).astype(np.uint8)
+                num_salt = np.ceil(
+                    drone.infrareds[str(camera_id)].noise_p * img_h*img_w)
+                coords = [np.random.randint(0, i-1, int(num_salt))
+                          for i in img.shape]
+                img[coords[0], coords[1]] = 100
+
+                #img = np.clip(img, a_min=0, a_max=100).astype(np.uint8)
+
                 if(len(ret) > 0):
                     for pts in ret:
                         hull = cv2.convexHull(np.array(pts).astype(
@@ -700,6 +705,7 @@ class Perception:
                         cv2.fillConvexPoly(img, hull, (255, 255, 255))
                 # cv2.imshow("test", img)
                 # cv2.waitKey()
+
                 return img
 
             else:
@@ -1119,6 +1125,7 @@ class Perception:
 
         topic_name = "/rflysim/sensor" + str(SeqID) + "/img_infrared"
         inter_val = 1/rate
+        print("sensor", SeqID, "data rate: ", rate)
         lastTime = time.time()
         type = None
         pub = None
@@ -1126,17 +1133,19 @@ class Perception:
             type = sensor.Image
             pub = rospy.Publisher(topic_name, type, queue_size=10)
         while True:
+            if(isEnableRosTrans and isLinux and rospy.is_shutdown()):
+                break
             lastTime = lastTime + inter_val
             sleepTime = lastTime - time.time()
             if sleepTime > 0:
                 time.sleep(sleepTime)
             else:
                 lastTime = time.time()
-
             if str(SeqID) in self.inf_camera.keys():
                 vis.hasData[int(SeqID)] = False
                 img = self.GetImg(
                     self.inf_camera[str(SeqID)], SeqID)
+                #img = np.zeros((480, 640), np.int8)
                 vis.Img[int(SeqID)] = copy.deepcopy(img)
                 vis.hasData[int(SeqID)] = True
                 if(isEnableRosTrans and isLinux):
@@ -1153,5 +1162,4 @@ class Perception:
                     pub.publish(msg)
             else:  # 飞机销毁了，附在飞机上的相机也就随之销毁
                 break
-            time.sleep(inter_val)
         pass
