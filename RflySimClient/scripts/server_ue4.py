@@ -24,26 +24,27 @@ vis.jsonLoad(1)  # 加载Config.json中的传感器配置文件
 vis.startImgCap()  # 开启取图循环，执行本语句之后，已经可以通过vis.Img[i]读取到图片了
 print('Start Image Reciver')
 
-vis.RemotSendIP = "192.168.3.56"
+vis.RemotSendIP = "192.168.31.56"
 # 控制飞机起飞到一定高度
 VehilceNum = 1
 # Create MAV instance
-mav = PX4MavCtrl.PX4MavCtrler(20100, '255.255.255.255')
+mav = PX4MavCtrl.PX4MavCtrler(20100, '192.168.31.195')
 #mav = PX4MavCtrl.PX4MavCtrler()
 time.sleep(2)
 mav.sendUE4PosScale(2, 100, 0, [0, 0, -100], [0, 0, 0], [2, 2, 2])
-mav.sendUE4PosScale(106, 3, 0, [320, 100, -10], [0, 0, 0], [10, 10, 10])
+mav.sendUE4PosScale(106, 3, 0, [2320, 100, -10], [0, 0, 0], [10, 10, 10])
 mav.sendUE4PosScale(1, 200, 0, [0,0,0])
 time.sleep(0.1)
-mav.sendUE4PosScale(77, 400, 0, [670,120,-17], [0,0,0], [10, 10, 10])  # 坦克，NED
+mav.sendUE4PosScale(177, 400, 0, [5000,1000,0], [0,0,0], [10, 10, 10])  # 坦克，NED
+time.sleep(2)
 perception = Perception.Perception(mav, vis)
 perception.AddDrones([1, 2])
-perception.AddObj([77, 106])
+perception.AddObj([177, 106])
 #perception.AddObj(77)
 pair = (0, 1)
 perception.PTZCameraPair(pair)
 perception.ReqRfySim()
-
+time.sleep(3)
 perception.StartCaptureImg()
 
 

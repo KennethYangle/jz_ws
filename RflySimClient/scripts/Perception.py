@@ -409,7 +409,7 @@ class Perception:
             objs = objs + [copter_id]
         self.mav.reqCamCoptObj(1, objs)
         self.mav.reqCamCoptObj(0, cams)
-
+        print("req objs: ",objs, " sensor: ",cams)
         time.sleep(2)
 
         self.mav.initUE4MsgRec()
@@ -450,6 +450,11 @@ class Perception:
         # 在这个线程执行之前，所有PrecePtion objs，drone 变量都以及设置完成
         print("total copter: ", len(self.mav.CoptDataVect))
         print("total camera: ", len(self.mav.CamDataVect))
+
+        if(len(self.mav.CoptDataVect) == 0 or len(self.mav.CamDataVect) == 0):
+            print("req RFlySim fail")
+            sys.exit(0)
+
         recv_ = []
         for copter_id, val in self.drones.items():
             drone = self.mav.getCamCoptObj(1, int(copter_id))

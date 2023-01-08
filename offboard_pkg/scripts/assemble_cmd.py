@@ -71,7 +71,7 @@ class Px4Controller:
                 self.rate.sleep()
 
         if self.scene == "jz":           # 拒止项目
-            targetPos=[0, 200, 100]    # ENU
+            targetPos=[0, 400, 20]    # ENU
             self.geo = EarthModel()
             lla = self.geo.enu2lla(targetPos, self.uavPosGPSHome)
             lat, lon, alt = lla[0], lla[1], lla[2]
@@ -82,7 +82,7 @@ class Px4Controller:
             time.sleep(0.5)
 
             # dis = np.linalg.norm(targetPos - self.mav_pos)
-            while abs(self.mav_pos[1] - targetPos[1]) > 20:
+            while abs(self.mav_pos[1] - targetPos[1]) > 50:
                 print("起飞中...")
                 print(self.mav_pos)
                 # self.takeoffService(latitude=lat, longitude=lon, altitude=alt)
