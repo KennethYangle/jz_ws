@@ -254,11 +254,11 @@ class Drone(Obj):
             print("infrared sensor's id is conficted")
 
     def AddRGBCamera(self, cam: Camera):
-        if not str(cam.id) in self.RGBCamera:
+        if not str(cam.seq_id) in self.RGBCamera:
             cam.is_from_rflysim = True
-            self.RGBCamera[str(cam.id)] = cam
-            if(str(cam.id) in self.infrareds.keys()):
-                self.infrareds[str(cam.id)].is_from_rflysim = True
+            self.RGBCamera[str(cam.seq_id)] = cam
+            if(str(cam.seq_id) in self.infrareds.keys()):
+                self.infrareds[str(cam.seq_id)].is_from_rflysim = True
         else:
             print("rgb sensor's id is conficted")
 
@@ -348,7 +348,10 @@ class Perception:
                               pair[1], " not belong same vehicle")
                         sys.exit(0)
                     else:
-                        self.pairs[self.rgb_camera[str(pair[0])]] = pair
+                        self.pairs[str(self.rgb_camera[str(pair[0])])] = pair
+                        copter_id = self.rgb_camera[str(pair[0])]
+                        cam = self.drones[str(copter_id)].infrareds[str(pair[1])]
+                        cam.is_from_rflysim = True
         elif isinstance(pairs, tuple):
             if str(pairs[0]) in self.rgb_camera.keys() and str(pairs[1]) in self.inf_camera.keys():
                 if(self.rgb_camera[str(pairs[0])] != self.inf_camera[str(pairs[1])]):
@@ -357,6 +360,9 @@ class Perception:
                     sys.exit(0)
                 else:
                     self.pairs[str(self.rgb_camera[str(pairs[0])])] = pairs
+                    copter_id = self.rgb_camera[str(pairs[0])]
+                    cam = self.drones[str(copter_id)].infrareds[str(pairs[1])]
+                    cam.is_from_rflysim = True
 
     def AddObj(self, objs_id):
         if isinstance(objs_id, list):
@@ -487,14 +493,13 @@ class Perception:
                         # obj.UpdateMatrix()
                         # print("posUE ", r_obj.PosUE,
                         #   "angle : ", r_obj.angEuler)
+                        #print("img camera update time: ", r_obj.timestmp)
                         obj.hasUpdate = True
                         # if(str(obj.id) in self.drones[str(obj.belong_copter)].infrareds.keys()):
-                        #print("obj_id: ", str(obj.seq_id))
                         if(str(obj.seq_id) in self.rgb_camera.keys()):
                             # 同步更新云台上的红外相机参数
-                            
                             inf_id = self.pairs[str(obj.belong_copter)][1]
-                            #print("rgb_id: ",obj.id, " inf_id: ", inf_id, "angEuler: ",r_obj.angEuler)
+                            # inf_id = tup[1]
                             self.drones[str(obj.belong_copter)].infrareds[str(
                                 inf_id)].position = list(r_obj.PosUE)
                             self.drones[str(obj.belong_copter)].infrareds[str(
@@ -512,6 +517,7 @@ class Perception:
                     # if len(obj.box_apex) == 0 and len(obj.bounding_box) > 0:
                     obj.CalBBoxApex()  # 更新box给顶点坐标
                     if(obj.class_type == 'drone'):  # 如果是固定翼飞机，需要做尾焰特殊处理
+                        #print("img: drone update time: ", r_obj.timestmp, "copter_id:",r_obj.CopterID)
                         shape_ = np.array(
                             [-obj.bounding_box[0] - obj.tail_flame_len, 0, 0]) + np.array(obj.box_origin)
                         obj.box_apex.append(shape_.tolist())
@@ -605,6 +611,7 @@ class Perception:
             camera_id: 需要获取的相机图像id
             为减少计算,只有在需要图像数据的时候才拷贝图像
         '''
+        img = []
         if str(copter_id) in self.drones.keys():
             drone = self.drones[str(copter_id)]
 
@@ -613,29 +620,88 @@ class Perception:
 
             # print("infrared: ", infrared.orientation)
             # print("rgb: ", rgb.orientation)
-
+            img = []
             if str(camera_id) in drone.RGBCamera.keys():
                 while True:
-                    if self.vis.hasData[drone.RGBCamera[str(copter_id)].seq_id]:
+                    if self.vis.hasData[drone.RGBCamera[str(camera_id)].seq_id]:
                         start_time = time.time()
                         # if(abs(start_time-self.vis.timeStmp[drone.RGBCamera[str(copter_id)].seq_id]) > 0.02):
                         # print("get img time out")
                         self.vis.hasData[drone.RGBCamera[str(
-                            copter_id)].seq_id] = False
+                            camera_id)].seq_id] = False
                         self.vis.Img_lock[drone.RGBCamera[str(
-                            copter_id)].seq_id].acquire()
+                            camera_id)].seq_id].acquire()
                         img = copy.deepcopy(
-                            self.vis.Img[drone.RGBCamera[str(copter_id)].seq_id])
+                            self.vis.Img[drone.RGBCamera[str(camera_id)].seq_id])
                         self.vis.Img_lock[drone.RGBCamera[str(
-                            copter_id)].seq_id].release()
+                            camera_id)].seq_id].release()
                         rgb_c = drone.RGBCamera[str(camera_id)]
                         cv2.line(img, (int(rgb_c.half_w - 1/40 * rgb_c.data_width), int(rgb_c.half_h)),
                                  (int(rgb_c.half_w+1/40 * rgb_c.data_width), int(rgb_c.half_h)), (0, 0, 255), int(rgb_c.data_width/400))
                         cv2.line(img, (int(rgb_c.half_w),
                                  int(rgb_c.half_h - 1/40 * rgb_c.data_height)),
                                  (int(rgb_c.half_w), int(rgb_c.half_h+1/40 * rgb_c.data_height)), (0, 0, 255), int(rgb_c.data_width/400))
-                        return img
+                        # return img
+                        break
                     time.sleep(0.001)
+                drone.UpdateMatrix()
+                # trans_matrix = trans_matrix @ drone.trans_R
+                img_w = drone.RGBCamera[str(camera_id)].data_width
+                img_h = drone.RGBCamera[str(camera_id)].data_height
+                drone_ptx = []
+                ret = []
+                for drone_id, drone_ in self.drones.items():
+                    if(drone_id == str(copter_id)):  # 不考虑自身的成像
+                        continue
+                    # if(time.time() - drone_.refresh_time > 0.02):
+                        # print("get obj status time out")
+                    # drone_.CalBBoxApex()
+                    points = self.ObjVehicle2World(
+                        drone_.position, drone_.orientation, drone_.box_apex)
+                    if(len(points) == 0):
+                        continue
+                    points = np.insert(
+                        points, 0, [[drone_.box_origin[0]+drone_.position[0], drone_.box_origin[1]+drone_.position[1], drone_.box_origin[2] + drone_.position[2]]], axis=0)
+                    drone_ptx = drone_ptx + points.tolist()
+                if len(drone_ptx) > 0:
+                    drone_img = self.TransformObjs(
+                        drone.trans_R, drone.RGBCamera[str(camera_id)].trans_R, drone.RGBCamera[str(camera_id)].internal_matrix, drone.RGBCamera[str(camera_id)].position, drone.position, drone_ptx, drone.RGBCamera[str(camera_id)].is_from_rflysim, 0)
+                    ret = self.Imaging('drone', drone.RGBCamera[str(camera_id)], [], drone_img, img_w,
+                                       img_h, drone.tail_flame_res)
+                obj_ptx = []
+                obj_seqId = []
+                for obj_id, obj in self.objs.items():
+                    # if(time.time() - obj.refresh_time > 0.02):
+                    # print("get obj status time out")
+                    # obj.CalBBoxApex()
+                    points = self.ObjVehicle2World(
+                        obj.position, obj.orientation, obj.box_apex)
+                    if(len(points) == 0):
+                        continue
+                    points = np.insert(
+                        points, 0, [[obj.box_origin[0]+obj.position[0], obj.box_origin[1] + obj.position[1], obj.box_origin[2] + obj.position[2]]], axis=0)
+                    obj_ptx = obj_ptx + points.tolist()
+                    obj_seqId = obj_seqId + [int(obj_id)]
+                if(len(obj_ptx) > 0):
+                    obj_img = self.TransformObjs(
+                        drone.trans_R, drone.RGBCamera[str(camera_id)].trans_R, drone.RGBCamera[str(camera_id)].internal_matrix, drone.RGBCamera[str(camera_id)].position, drone.position, obj_ptx, drone.RGBCamera[str(camera_id)].is_from_rflysim, 0)
+                    ret = ret + \
+                        self.Imaging('obj', drone.RGBCamera[str(
+                            camera_id)], obj_seqId, obj_img, img_w, img_h)
+                if(len(ret) > 0):
+                    for pts in ret:
+                        if(len(pts) != 4):
+                            hull = cv2.convexHull(np.array(pts).astype(
+                                np.int32), returnPoints=True)
+                            cv2.fillConvexPoly(img, hull, (0, 0, 255))
+                        else:
+                            cv2.rectangle(img, (int(pts[0][0]), int(pts[0][1])), (int(
+                                pts[2][0]), int(pts[2][1])), (0, 255, 0), 2)
+                # cv2.imshow("test", img)
+                # cv2.waitKey()
+
+                return img
+
             elif str(camera_id) in drone.infrareds.keys():
                 # 做两次坐标转换，需要输出目标，且要判断目标是否在视场内,同时需要判断目标有没有被销毁，然后3D到2D变化
                 # if time.time() - drone.infrareds[str(camera_id)].refresh_time > 0.02:
@@ -666,6 +732,9 @@ class Perception:
                     # drone_.CalBBoxApex()
                     points = self.ObjVehicle2World(
                         drone_.position, drone_.orientation, drone_.box_apex)
+                    if(len(points) == 0):
+                        continue
+                    #print("update len(ori)",len(drone_.box_origin), "pos: ",len(drone_.position), "copter_id: ",drone_id)
                     points = np.insert(
                         points, 0, [[drone_.box_origin[0]+drone_.position[0], drone_.box_origin[1]+drone_.position[1], drone_.box_origin[2] + drone_.position[2]]], axis=0)
                     drone_ptx = drone_ptx + points.tolist()
@@ -679,9 +748,11 @@ class Perception:
                 for obj_id, obj in self.objs.items():
                     # if(time.time() - obj.refresh_time > 0.02):
                     # print("get obj status time out")
-                    obj.CalBBoxApex()
+                    # obj.CalBBoxApex()
                     points = self.ObjVehicle2World(
                         obj.position, obj.orientation, obj.box_apex)
+                    if(len(points) == 0):
+                        continue
                     points = np.insert(
                         points, 0, [[obj.box_origin[0]+obj.position[0], obj.box_origin[1] + obj.position[1], obj.box_origin[2] + obj.position[2]]], axis=0)
                     obj_ptx = obj_ptx + points.tolist()
@@ -705,9 +776,16 @@ class Perception:
 
                 if(len(ret) > 0):
                     for pts in ret:
-                        hull = cv2.convexHull(np.array(pts).astype(
-                            np.int32), returnPoints=True)
-                        cv2.fillConvexPoly(img, hull, (255, 255, 255))
+                        # hull = cv2.convexHull(np.array(pts).astype(
+                        #     np.int32), returnPoints=True)
+                        # cv2.fillConvexPoly(img, hull, (255, 255, 255))
+                        if(len(pts) != 4):
+                            hull = cv2.convexHull(np.array(pts).astype(
+                                np.int32), returnPoints=True)
+                            cv2.fillConvexPoly(img, hull, (255, 255, 255))
+                        else:
+                            cv2.rectangle(img, (int(pts[0][0]), int(pts[0][1])), (int(
+                                pts[2][0]), int(pts[2][1])), (255, 255, 255), -1)
                 # cv2.imshow("test", img)
                 # cv2.waitKey()
 

@@ -64,7 +64,7 @@ def infrared_image_callback(data):
         h = stats[i, cv2.CC_STAT_HEIGHT]
         area = stats[i, cv2.CC_STAT_AREA]
 
-        if area > 20:
+        if area > 10:
             bbox = BoundingBox()
             bbox.probability = 1
             bbox.xmin = left

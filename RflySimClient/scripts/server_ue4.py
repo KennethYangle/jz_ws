@@ -11,6 +11,8 @@ import VisionCaptureApi
 import PX4MavCtrlV4 as PX4MavCtrl
 import math
 import Perception
+import time
+import threading
 
 # 启用ROS发布模式
 VisionCaptureApi.isEnableRosTrans = True
@@ -30,11 +32,13 @@ mav = PX4MavCtrl.PX4MavCtrler(20100, '255.255.255.255')
 #mav = PX4MavCtrl.PX4MavCtrler()
 time.sleep(2)
 mav.sendUE4PosScale(2, 100, 0, [0, 0, -100], [0, 0, 0], [2, 2, 2])
-mav.sendUE4PosScale(106, 3, 0, [50, -20, -10], [0, 0, 0], [5, 5, 5])
-mav.sendUE4PosScale(77, 400, 0, [75,0,-1.7], [0,0,0], [1, 1, 1])
+mav.sendUE4PosScale(106, 3, 0, [320, 100, -10], [0, 0, 0], [10, 10, 10])
+mav.sendUE4PosScale(1, 200, 0, [0,0,0])
+time.sleep(0.1)
+mav.sendUE4PosScale(77, 400, 0, [670,120,-17], [0,0,0], [10, 10, 10])  # 坦克，NED
 perception = Perception.Perception(mav, vis)
-perception.AddDrones(2)
-perception.AddObj([106,77])
+perception.AddDrones([1, 2])
+perception.AddObj([77, 106])
 #perception.AddObj(77)
 pair = (0, 1)
 perception.PTZCameraPair(pair)
@@ -42,6 +46,22 @@ perception.ReqRfySim()
 
 perception.StartCaptureImg()
 
+
+def Fly(per: Perception.Perception):
+    # 控制示例飞机飞行,这里只是示例，实际控制飞机应当由simulink控制
+    while True:
+        for idx, val in per.drones.items():
+            if(val.copter_id == 1):
+                val.position[0] = val.position[0] + 0.4  # 观测飞机4m/s
+            else:
+                val.position[0] = val.position[0] + 0.6  # 目标飞机6m/s
+            per.mav.sendUE4PosScale(
+                val.copter_id, 100, 0, val.position, [0, 0, 0], [2, 2, 2])
+        time.sleep(0.1)
+
+
+fly_th = threading.Thread(target=Fly, args=(perception,))
+fly_th.start()
 
 # Start MAV loop with UDP mode: MAVLINK_FULL
 
@@ -57,10 +77,9 @@ perception.StartCaptureImg()
 #         time.sleep(sleepTime)
 #     else:
 #         lastTime = time.time()
-
-#     for i in range(len(vis.hasData)):
-#         if vis.hasData[i]:
-#             # Process your image here
-#             cv2.imshow('Img'+str(i), vis.Img[i])
-#             cv2.waitKey(1)
+#     img = perception.GetImg(1,0)
+#     if (len(img) ==0):
+#         continue
+#     cv2.imshow("test",img)
+#     cv2.waitKey(1)
 

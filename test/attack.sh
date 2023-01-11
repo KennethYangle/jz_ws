@@ -16,9 +16,9 @@
 MAVID=1
 MAVNUM=1
 # RflySim仿真参数
-UE4IP="192.168.3.254"
-MAVX="-270"
-MAVY="-119"
+UE4IP="192.168.31.195"
+MAVX="0"
+MAVY="0"
 MAVZ="0"
 # 硬件在环仿真和实飞为true，软件在环仿真为false
 USE_PIX=false

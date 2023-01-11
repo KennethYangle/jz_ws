@@ -6,9 +6,10 @@ import numpy as np
 import os
 import json
 import rospy, rospkg
+from PX4MavCtrlV4 import EarthModel
 from geometry_msgs.msg import TwistStamped, Quaternion
 from swarm_msgs.msg import Action
-from mavros_msgs.msg import State, PositionTarget, AttitudeTarget
+from mavros_msgs.msg import State, PositionTarget, AttitudeTarget, HomePosition
 from mavros_msgs.srv import CommandBool, SetMode, CommandTOL
 from geometry_msgs.msg import PoseStamped, TwistStamped
 
@@ -31,9 +32,11 @@ class Px4Controller:
         self.mav_yaw = 0
         self.mav_pos = np.array([0., 0., 0.])
         self.mav_R = np.identity(3)
+        self.uavPosGPSHome = [28.1405220, 112.9825003, 53.220]
 
         # mavros topics
         self.local_pose_sub = rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.local_pose_callback)
+        self.global_home_sub = rospy.Subscriber("mavros/home_position/home", HomePosition, self.mav_home_cb)
         self.local_vel_pub =  rospy.Publisher('/mavros/setpoint_raw/local', PositionTarget, queue_size=10)
         self.local_att_pub =  rospy.Publisher('/mavros/setpoint_raw/attitude', AttitudeTarget, queue_size=10)
         self.vel_pub = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel', TwistStamped, queue_size=10)                     # 发布速度指令（重要）
@@ -68,13 +71,29 @@ class Px4Controller:
                 self.rate.sleep()
 
         if self.scene == "jz":           # 拒止项目
-            self.takeoffService(altitude=100)    # 最小25m
-            rospy.loginfo("Taking off")
-            time.sleep(5)
-            self.offboard_state = self.offboard()
-            print("开始进入Offboard模式")   
+            targetPos=[0, 200, 100]    # ENU
+            self.geo = EarthModel()
+            lla = self.geo.enu2lla(targetPos, self.uavPosGPSHome)
+            lat, lon, alt = lla[0], lla[1], lla[2]
 
-            for i in range(10):
+            print("latitude={}, longitude={}, altitude={}".format(lat, lon, alt))
+            self.takeoffService(latitude=lat, longitude=lon, altitude=alt)
+            rospy.loginfo("Taking off")
+            time.sleep(0.5)
+
+            # dis = np.linalg.norm(targetPos - self.mav_pos)
+            while abs(self.mav_pos[1] - targetPos[1]) > 20:
+                print("起飞中...")
+                print(self.mav_pos)
+                # self.takeoffService(latitude=lat, longitude=lon, altitude=alt)
+                time.sleep(0.5)
+                # dis = np.linalg.norm(targetPos - self.mav_pos)
+
+            self.offboard_state = self.offboard()
+            print("开始进入Offboard模式")
+
+            # 保持前飞一段
+            for i in range(100):
                 q = Quaternion()
                 q.w = 1.
                 q.x = 0.
@@ -131,6 +150,11 @@ class Px4Controller:
             [2*(q1*q2+q0*q3), q0**2-q1**2+q2**2-q3**2, 2*(q2*q3-q0*q1)],
             [2*(q1*q3-q0*q2), 2*(q2*q3+q0*q1), q0**2-q1**2-q2**2+q3**2]
         ])
+
+    
+    def mav_home_cb(self, msg):
+        self.uavPosGPSHome = [msg.geo.latitude, msg.geo.longitude, msg.geo.altitude]
+
 
     # 悬停
     def idle(self):
