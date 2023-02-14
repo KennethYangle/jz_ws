@@ -22,7 +22,7 @@ vis.jsonLoad(1)  # 加载Config.json中的传感器配置文件
 vis.startImgCap()  # 开启取图循环，执行本语句之后，已经可以通过vis.Img[i]读取到图片了
 print('Start Image Reciver')
 
-vis.RemotSendIP = "192.168.31.56"
+vis.RemotSendIP = "192.168.3.56"
 # 控制飞机起飞到一定高度
 VehilceNum = 1
 # Create MAV instance

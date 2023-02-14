@@ -45,7 +45,7 @@ class Utils(object):
         g = [0, 0, 9.8]
         V = np.linalg.norm(pos_info["mav_vel"])
         v_d = (V + 1) * n_eo
-        a_d = 0.2 * (v_d - pos_info["mav_vel"])
+        a_d = 0.4 * (v_d - pos_info["mav_vel"])
 
         # calculate R_d
         r1 = pos_info["mav_vel"] / V
@@ -60,7 +60,8 @@ class Utils(object):
         # q_array = quaternion_from_matrix(M)
         euler = euler_from_matrix(M)
         # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/12, euler[2])
-        q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/30, euler[2])
+        q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/16.5, euler[2])
+        # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/30, euler[2])
 
         q = Quaternion()
         # q.w = 0.996

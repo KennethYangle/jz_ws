@@ -16,7 +16,7 @@
 MAVID=1
 MAVNUM=1
 # RflySim仿真参数
-UE4IP="192.168.31.195"
+UE4IP="192.168.3.4"
 MAVX="0"
 MAVY="0"
 MAVZ="0"
@@ -30,7 +30,7 @@ rosrun RflySimClient server_ue4.py  & PID0=$!
 sleep 3s
 
 # mavros and localization
-roslaunch bs_assis bs_mavros.launch  mav_id:=${MAVID} use_pix:=${USE_PIX} port1:=`expr ${MAVID} \* 2 + 20099` port2:=`expr ${MAVID} \* 2 + 20098` & PID1=$!
+roslaunch bs_assis bs_mavros.launch  mav_id:=${MAVID} use_pix:=${USE_PIX} IP:=${UE4IP} port1:=`expr ${MAVID} \* 2 + 20099` port2:=`expr ${MAVID} \* 2 + 20098` & PID1=$!
 sleep 2s
 roslaunch localization bias.launch  drone_id:=${MAVID}  drone_num:=${MAVNUM} & PID2=$!
 sleep 5s

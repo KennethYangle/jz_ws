@@ -71,7 +71,7 @@ class Px4Controller:
                 self.rate.sleep()
 
         if self.scene == "jz":           # 拒止项目
-            targetPos=[0, 400, 20]    # ENU
+            targetPos=[0, 400, 50]    # ENU
             self.geo = EarthModel()
             lla = self.geo.enu2lla(targetPos, self.uavPosGPSHome)
             lat, lon, alt = lla[0], lla[1], lla[2]
@@ -93,7 +93,7 @@ class Px4Controller:
             print("开始进入Offboard模式")
 
             # 保持前飞一段
-            for i in range(100):
+            for i in range(20):
                 q = Quaternion()
                 q.w = 1.
                 q.x = 0.
