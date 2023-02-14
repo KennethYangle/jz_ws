@@ -35,7 +35,7 @@ mav.sendUE4PosScale(2, 100, 0, [0, 0, -100], [0, 0, 0], [2, 2, 2])
 mav.sendUE4PosScale(106, 3, 0, [2320, 100, -10], [0, 0, 0], [10, 10, 10])
 mav.sendUE4PosScale(1, 200, 0, [0,0,0])
 time.sleep(0.1)
-mav.sendUE4PosScale(177, 400, 0, [7000,1000,0], [0,0,0], [10, 10, 10])  # 坦克，NED
+mav.sendUE4PosScale(177, 400, 0, [7000,1000,-10], [0,0,0], [30, 30, 30])  # 坦克，NED
 time.sleep(2)
 perception = Perception.Perception(mav, vis)
 perception.AddDrones([1, 2])

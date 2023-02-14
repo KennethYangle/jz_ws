@@ -60,7 +60,7 @@ class Utils(object):
         # q_array = quaternion_from_matrix(M)
         euler = euler_from_matrix(M)
         # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/12, euler[2])
-        q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/16.5, euler[2])
+        q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/17.5, euler[2])
         # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/30, euler[2])
 
         q = Quaternion()
