@@ -104,8 +104,6 @@ class VisionSensorReq:
         self.DataCheckFreq = 0
         self.SendProtocol = [0, 0, 0, 0, 0, 0, 0, 0]
         self.CameraFOV = 90
-        self.MaxFOV = 170
-        self.MinFOV = 5
         self.SensorPosXYZ = [0, 0, 0]
         self.SensorAngEular = [0, 0, 0]
         self.MaxRotaion = [0, 0, 0]
@@ -1530,16 +1528,6 @@ class VisionCaptureApi:
                 else:
                     print("Json data format is wrong!")
                     continue
-                if isinstance(jsData["VisionSensors"][i]["MaxFOV"], float) or isinstance(jsData["VisionSensors"][i]["MaxFOV"], int):
-                    visSenStruct.MaxFOV = jsData["VisionSensors"][i]["MaxFOV"]
-                else:
-                    print("Json data format is wrong!")
-                    continue
-                if isinstance(jsData["VisionSensors"][i]["MinFOV"], float) or isinstance(jsData["VisionSensors"][i]["MinFOV"], int):
-                    visSenStruct.MinFOV = jsData["VisionSensors"][i]["MinFOV"]
-                else:
-                    print("Json data format is wrong!")
-                    continue
 
                 if len(jsData["VisionSensors"][i]["SendProtocol"]) == 8:
                     visSenStruct.SendProtocol = jsData["VisionSensors"][i]["SendProtocol"]
@@ -1567,7 +1555,7 @@ class VisionCaptureApi:
                     print("Json data format is wrong!")
                     continue
                 if len(jsData["VisionSensors"][i]["MinRotation"]) == 3:
-                    visSenStruct.MinRotaion = jsData["VisionSensors"][i]["MinRotation"]
+                    visSenStruct.MinRotaion = jsData["VisionSensors"][i]["MaxRotation"]
                 else:
                     print("Json data format is wrong!")
                     continue

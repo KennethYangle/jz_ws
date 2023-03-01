@@ -131,8 +131,6 @@ class Camera(Obj):
         super().__init__(id, class_type='camera')
         self.seq_id = sensor.SeqID
         self.FOV = sensor.CameraFOV
-        self.max_fov = sensor.MaxFOV  # 设置调焦约束
-        self.min_fov = sensor.MinFOV
         # self.position = [0, 0, 0]  # 相对于载体位置,如果是RFlySim返回的数据是相对全局的
         # self.orientation = [0, 0, 0]  # 相对于载体姿态
         self.data_width = sensor.DataWidth
@@ -160,7 +158,7 @@ class Camera(Obj):
             sensor.MinRotaion) + np.array(sensor.SensorAngEular)) * math.pi / 180).tolist()
         self.max_rotation = ((np.array(
             sensor.MaxRotaion) + np.array(sensor.SensorAngEular)) * math.pi / 180).tolist()
-        self.is_from_rflysim = False  # 相机属性是不是来自于rflysim
+        self.is_from_rflysim = False
         # if(type == 'rgb'):
         # self.is_from_rflysim = True
 
@@ -351,9 +349,6 @@ class Perception:
                         sys.exit(0)
                     else:
                         self.pairs[str(self.rgb_camera[str(pair[0])])] = pair
-                        copter_id = self.rgb_camera[str(pair[0])]
-                        cam = self.drones[str(copter_id)].infrareds[str(pair[1])]
-                        cam.is_from_rflysim = True
         elif isinstance(pairs, tuple):
             if str(pairs[0]) in self.rgb_camera.keys() and str(pairs[1]) in self.inf_camera.keys():
                 if(self.rgb_camera[str(pairs[0])] != self.inf_camera[str(pairs[1])]):
@@ -362,9 +357,6 @@ class Perception:
                     sys.exit(0)
                 else:
                     self.pairs[str(self.rgb_camera[str(pairs[0])])] = pairs
-                    copter_id = self.rgb_camera[str(pairs[0])]
-                    cam = self.drones[str(copter_id)].infrareds[str(pairs[1])]
-                    cam.is_from_rflysim = True
 
     def AddObj(self, objs_id):
         if isinstance(objs_id, list):
@@ -411,7 +403,7 @@ class Perception:
             objs = objs + [copter_id]
         self.mav.reqCamCoptObj(1, objs)
         self.mav.reqCamCoptObj(0, cams)
-        print("req objs: ",objs, " sensor: ",cams)
+
         time.sleep(2)
 
         self.mav.initUE4MsgRec()
@@ -452,11 +444,6 @@ class Perception:
         # 在这个线程执行之前，所有PrecePtion objs，drone 变量都以及设置完成
         print("total copter: ", len(self.mav.CoptDataVect))
         print("total camera: ", len(self.mav.CamDataVect))
-
-        if(len(self.mav.CoptDataVect) == 0 or len(self.mav.CamDataVect) == 0):
-            print("req RFlySim fail")
-            sys.exit(0)
-
         recv_ = []
         for copter_id, val in self.drones.items():
             drone = self.mav.getCamCoptObj(1, int(copter_id))
@@ -500,7 +487,6 @@ class Perception:
                         # obj.UpdateMatrix()
                         # print("posUE ", r_obj.PosUE,
                         #   "angle : ", r_obj.angEuler)
-                        #print("img camera update time: ", r_obj.timestmp)
                         obj.hasUpdate = True
                         # if(str(obj.id) in self.drones[str(obj.belong_copter)].infrareds.keys()):
                         if(str(obj.seq_id) in self.rgb_camera.keys()):
@@ -511,8 +497,6 @@ class Perception:
                                 inf_id)].position = list(r_obj.PosUE)
                             self.drones[str(obj.belong_copter)].infrareds[str(
                                 inf_id)].orientation = list(r_obj.angEuler)
-                            self.drones[str(obj.belong_copter)].infrareds[str(inf_id)].SetFOV(r_obj.CameraFOV)
-                            self.drones[str(obj.belong_copter)].infrareds[str(inf_id)].SetImgSize(r_obj.DataWidth,r_obj.DataHeight)
                             # print("cam, angle: ", r_obj.angEuler,
                             #       " degree: ", np.array(r_obj.angEuler) / math.pi * 180)
                             self.drones[str(obj.belong_copter)].infrareds[str(
@@ -526,7 +510,6 @@ class Perception:
                     # if len(obj.box_apex) == 0 and len(obj.bounding_box) > 0:
                     obj.CalBBoxApex()  # 更新box给顶点坐标
                     if(obj.class_type == 'drone'):  # 如果是固定翼飞机，需要做尾焰特殊处理
-                        #print("img: drone update time: ", r_obj.timestmp, "copter_id:",r_obj.CopterID)
                         shape_ = np.array(
                             [-obj.bounding_box[0] - obj.tail_flame_len, 0, 0]) + np.array(obj.box_origin)
                         obj.box_apex.append(shape_.tolist())
@@ -587,12 +570,12 @@ class Perception:
             print("get status time out")
         return [], []
 
-    def GetCamera(self, copter_id, camera_id) -> Camera:
+    def GetCamera(self, copter_id, camera_id, class_type='') -> Camera:
         if str(copter_id) in self.drones.keys():
-            if str(camera_id) in self.drones[str(copter_id)].infrareds.keys():
+            if class_type == 'infrared' and str(camera_id) in self.drones[str(copter_id)].infrareds.keys():
                 cam = self.drones[str(copter_id)].infrareds[str(camera_id)]
                 return cam
-            elif str(camera_id) in self.drones[str(copter_id)].RGBCamera.keys():
+            elif class_type == 'rgb' and str(camera_id) in self.drones[str(copter_id)].RGBCamera.keys():
                 cam = self.drones[str(copter_id)].RGBCamera[str(camera_id)]
                 return cam
             else:
@@ -667,8 +650,6 @@ class Perception:
                     # drone_.CalBBoxApex()
                     points = self.ObjVehicle2World(
                         drone_.position, drone_.orientation, drone_.box_apex)
-                    if(len(points) == 0):
-                        continue
                     points = np.insert(
                         points, 0, [[drone_.box_origin[0]+drone_.position[0], drone_.box_origin[1]+drone_.position[1], drone_.box_origin[2] + drone_.position[2]]], axis=0)
                     drone_ptx = drone_ptx + points.tolist()
@@ -741,9 +722,6 @@ class Perception:
                     # drone_.CalBBoxApex()
                     points = self.ObjVehicle2World(
                         drone_.position, drone_.orientation, drone_.box_apex)
-                    if(len(points) == 0):
-                        continue
-                    #print("update len(ori)",len(drone_.box_origin), "pos: ",len(drone_.position), "copter_id: ",drone_id)
                     points = np.insert(
                         points, 0, [[drone_.box_origin[0]+drone_.position[0], drone_.box_origin[1]+drone_.position[1], drone_.box_origin[2] + drone_.position[2]]], axis=0)
                     drone_ptx = drone_ptx + points.tolist()
@@ -785,16 +763,9 @@ class Perception:
 
                 if(len(ret) > 0):
                     for pts in ret:
-                        # hull = cv2.convexHull(np.array(pts).astype(
-                        #     np.int32), returnPoints=True)
-                        # cv2.fillConvexPoly(img, hull, (255, 255, 255))
-                        if(len(pts) != 4):
-                            hull = cv2.convexHull(np.array(pts).astype(
-                                np.int32), returnPoints=True)
-                            cv2.fillConvexPoly(img, hull, (255, 255, 255))
-                        else:
-                            cv2.rectangle(img, (int(pts[0][0]), int(pts[0][1])), (int(
-                                pts[2][0]), int(pts[2][1])), (255, 255, 255), -1)
+                        hull = cv2.convexHull(np.array(pts).astype(
+                            np.int32), returnPoints=True)
+                        cv2.fillConvexPoly(img, hull, (255, 255, 255))
                 # cv2.imshow("test", img)
                 # cv2.waitKey()
 
@@ -872,7 +843,7 @@ class Perception:
             return two_d.tolist()
         else:
             # 合并输出时，三维数据在前，二维数据在后，两个数量相等，维度不等
-            return sensor_coordinate.T.tolist() + two_d.tolist()
+            return sensor_coordinate.T.tolist() + two_d
 
     def CtrlCameraRat(self, copter_id, cam_id, angEuler: list):
         '''
@@ -888,12 +859,14 @@ class Perception:
             sys.exit(0)
         else:
             val = self.drones[str(copter_id)]
-            if(str(cam_id) in val.RGBCamera.keys()):
+            if(str(cam_id) in val.RGBCamera.keys() and str(cam_id) in val.infrareds.keys()):
                 cam_rgb = val.RGBCamera[str(cam_id)]
+                infrared = val.infrareds[str(cam_id)]
                 # cam_rgb.SetOrientation(angEuler) #可见光的相机角度有平台给出
                 # infrared.SetOrientation(angEuler)
                 vis = self.vis.VisSensor[cam_rgb.seq_id]
                 vis.SensorAngEular = copy.deepcopy(angEuler)
+                # print("angle ", angEuler)
                 self.vis.sendUpdateUEImage(vis)
             elif(str(cam_id) in val.infrareds.keys()):
                 cam = val.infrareds[str(cam_id)]
@@ -1028,7 +1001,7 @@ class Perception:
                 ret = ret+[[tial]]
         else:
             # 普通目标
-            #camera.insight_obj = []
+            camera.insight_obj = []
             for i in range(0, len(pos), 9):
                 # obj = pos[i:i+9]
                 obj = np.array(pos[i:i+9]).T
@@ -1069,7 +1042,8 @@ class Perception:
                     min_x = 0
                 if(min_y < 0):
                     min_y = 0
-                camera.insight_obj = [objs[int(i / 9)]]  # 当前目标再视场角内
+                camera.insight_obj = camera.insight_obj + \
+                    [objs[int(i / 9)]]  # 当前目标再视场角内
                 ret = ret + [[[min_x, min_y], [max_x, min_y],
                               [max_x, max_y], [min_x, max_y]]]
 
@@ -1114,165 +1088,89 @@ class Perception:
 
         pass
 
-    def AimWeapon(self, cam: Camera, mode: int,RflySimIP:str,scale_w) -> bool:
+    def AimWeapon(self, copter_id, camera_id) -> bool:
         '''
             武器锁定目标,这里只有个调用了GetImg 才会更新数据
-            camera_id: 相机id,
-            copter_id: 飞机id
-            mode: 0:锁定目标,1:调整焦距
-            scale_w 占据图像宽度的比例,当然得约束在FOV内
+            mode: 默认为自动锁定目标
+            cmd: 可以通过命令取消锁定
         '''
         # if (not hasattr(self.AimWeapon, 'seq_id', 'copter_id', 'camera_id')):
         #     self.AimWeapon.seq_id = -1
         #     self.AimWeapon.copter_id = copter_id
         #     self.AimWeapon.camera_id = camera_id
-        tar_w = cam.data_width * scale_w
-        tar_w_2 = tar_w /2
-        drone = self.drones[str(cam.belong_copter)]
-        # if(not cam.is_from_rflysim):
-        #     return False
-        
-        if(cam.type == 1 and str(drone.id) in self.pairs.keys()):
-           cam.insight_obj = drone.infrareds[str(self.pairs[str(drone.id)][1])].insight_obj
-        if(not len(cam.insight_obj) == 1):
-            # 视场内只会有一个目标出现，如果没有目标进行扫描
-            return False
-        else:
-            if str(cam.insight_obj[0] in self.objs.keys()):
-                obj = self.objs[str(cam.insight_obj[0])]
 
-                # pos = self.ObjVehicle2World(
-                #     obj.position, obj.orientation, obj.box_apex)
-                # pos = np.insert(
-                #     pos, 0, [[obj.box_origin[0], obj.box_origin[1], obj.box_origin[2]]], axis=0)
-
-                # dist = np.linalg.norm(
-                #     np.array(pos) - np.array(cam.position))
- # 获取到图像坐标系坐标
-                vis = self.vis.VisSensor[cam.seq_id]
-                if(mode == 0):
-                    while True:
+        if str(copter_id) in self.drones.keys():
+            drone = self.drones[str(copter_id)]
+            if(str(camera_id) in drone.infrareds.keys() and str(camera_id) in drone.RGBCamera.keys()):
+                cam = self.drones[str(copter_id)].infrareds[str(camera_id)]
+                if(not cam.is_from_rflysim):
+                    return False
+                if(not len(cam.insight_obj) == 1):
+                    # 视场内只会有一个目标出现
+                    return False
+                else:
+                    if str(cam.insight_obj[0] in self.objs.keys()):
+                        obj = self.objs[str(cam.insight_obj[0])]
                         pos = list(np.array(obj.box_origin) +
                                    np.array(obj.position))
-                        ret = self.TransformObjs(drone.trans_R, cam.trans_R, cam.internal_matrix,
-                                                 cam.position, drone.position, [pos], True, 1)
-                        x = ret[0][0]
-                        y = ret[0][1]
-                        dx = (x - cam.half_w)
-                        dy = (y - cam.half_h)
-                        if int(abs(dx)) <= 3 and int(abs(dy)) <= 3:
-                            # return SensorAngEular
-                            break
+                        # pos = self.ObjVehicle2World(
+                        #     obj.position, obj.orientation, obj.box_apex)
+                        # pos = np.insert(
+                        #     pos, 0, [[obj.box_origin[0], obj.box_origin[1], obj.box_origin[2]]], axis=0)
 
-                        # if(abs(dx) > 30):  # 有个连续性
-                        # if(int(abs(dy)) < 3):
-                        #     dy = 0
-                        # if(int(abs(dx)) < 3):
-                        #     dx = 0
-                        if(dx > 3):
-                            if(dy < 3):
-                                pass
-                            else:
-                                dx = 0.1 * dx
-                        if(dy > 3):
-                            dy = 0.1 * dy
-                        f = cam.internal_matrix[0, 0]
-                        theta = -math.radians(vis.SensorAngEular[0])
-                        ex = math.cos(theta)*dx + math.sin(theta)*dy
-                        ey = math.cos(theta)*dy - math.sin(theta)*dx
-                        pitch = math.atan(ex/f)
-                        yaw = math.atan(ex/f)
+                        # dist = np.linalg.norm(
+                        #     np.array(pos) - np.array(cam.position))
+                        while True:
+                            ret = self.TransformObjs(drone.trans_R, cam.trans_R, cam.internal_matrix,
+                                                     cam.position, drone.position, [pos], True, 1)
+                            x = ret[0][0]
+                            y = ret[0][1]
+                            dx = x - cam.half_w
+                            dy = y - cam.half_h
+                            vis = self.vis.VisSensor[drone.RGBCamera[str(
+                                camera_id)].seq_id]
+                            f = cam.internal_matrix[0, 0]
+                            theta = -math.radians(vis.SensorAngEular[0])
+                            ex = math.cos(theta)*dx + math.sin(theta)*dy
+                            ey = math.cos(theta)*dy - math.sin(theta)*dx
+                            pitch = math.atan(ex/f)
+                            yaw = math.atan(ex/f)
+                            if abs(dx) < 3 and abs(dy) < 3:
+                                # return SensorAngEular
+                                break
+                            if abs(ex) > cam.half_w:
+                                if ex > 0:
+                                    ex = cam.half_w
+                                else:
+                                    ex = -cam.half_w
+                            if abs(ey) > cam.half_h:
+                                if ey > 0:
+                                    ey = cam.half_h
+                                else:
+                                    ey = -cam.half_h
 
-                        if abs(ex) > cam.half_w:
-                            if ex > 0:
-                                ex = cam.half_w
-                            else:
-                                ex = -cam.half_w
-                        if abs(ey) > cam.half_h:
-                            if ey > 0:
-                                ey = cam.half_h
-                            else:
-                                ey = -cam.half_h
-                        pitch = vis.SensorAngEular[1] + \
-                            math.degrees(math.atan(-ey/f))
-                        yaw = vis.SensorAngEular[2] + \
-                            math.degrees(math.atan(ex/f))
+                            pitch = vis.SensorAngEular[1] + \
+                                math.degrees(math.atan(-ey/f))
+                            yaw = vis.SensorAngEular[2] + \
+                                math.degrees(math.atan(ex/f))
 
-                        # if(pitch < math.degrees(cam.min_rotation[1]) or pitch > math.degrees(cam.max_rotation[1]) or yaw < math.degrees(cam.min_rotation[2]) or yaw > math.degrees(cam.max_rotation[2])):
-                        #     print("pitch: ", pitch, " yaw: ", yaw)
-                        #     print("constraint : min ", np.degrees(
-                        #         cam.min_rotation), " max:", np.degrees(cam.max_rotation))
-                        #     print(
-                        #         "current rotation over constraint condition")
-                        #     return True
-                        tran = [vis.SensorAngEular[0], pitch, yaw]
-                        if(cam.type == 1):
+                            if(pitch < math.degrees(cam.min_rotation[1]) or pitch > math.degrees(cam.max_rotation[1]) or yaw < math.degrees(cam.min_rotation[2]) or yaw > math.degrees(cam.max_rotation[2])):
+                                print("current rotation over constraint condition")
+                                return False
+                            tran = [vis.SensorAngEular[0], pitch, yaw]
                             vis.SensorAngEular = list(tran)
-                            self.vis.sendUpdateUEImage(vis,0,RflySimIP)
-                        elif(cam.type == 7):
-                            vis.SensorAngEular = list(tran)
-                            cam.SetOrientation(tran)
-                        time.sleep(0.1)
-                    return True
-                elif mode == 1:
-                    # 调整焦距,对于云台相机更新RGB相机，红外相机参数会自动更新,随着距离变近，fov逐渐变大
-                    pos = list(np.array(obj.box_apex)+np.array(obj.position))
-                    ret = self.TransformObjs(drone.trans_R, cam.trans_R, cam.internal_matrix,
-                                             cam.position, drone.position, pos, True, 3)
-                    if(len(ret) < 16):
-                        return False
-                    sensor_coor = ret[0:8]
-                    img_coor = ret[8:16]
-                    points = np.array(img_coor)
-                    # obj_w = np.max(points, axis=0) - \
-                    #     np.min(points, axis=0)
-                    # obj_h = np.max(points, axis=0) - \
-                    #     np.min(points, axis=0)
-                    
-                    # tar_h = cam.data_height * aim_
-                    # top_left = [img_coor[0][0]-tar_w /
-                    #             2, img_coor[0][1]-tar_w/2]
-                    # bottom_right = [tar_w/2 + img_coor[0]
-                    #                 [0], tar_h/2-img_coor[0][1]]
-                    # 超过边界处理
-                    # if(top_left < 0):
-                    # 按理来说根据参数变焦不应该超图像边界(目标box中心位置应该在图像几何中心)，但是由于控制精度以及相机旋转约束，不能保证目标中心位置在图像中心
-                    # 这种一般不能发生，因为一旦发生说明控制算法需要大幅度优化或者aim_参数设置不合理
-                    # pass
-
-                    dx = img_coor[7][0] - cam.half_w
-                    tar_left_x = cam.half_w - tar_w_2
-                    x_left = tar_left_x + dx
-                    idx_min = np.argmin(points, axis=0)
-                    x_s = sensor_coor[idx_min[0]][0]
-                    y_s = sensor_coor[idx_min[0]][1]
-
-                    val = cam.half_w * y_s / \
-                        ((x_left-cam.half_w)*x_s)
-                    val = val
-                    ang = abs(math.atan(val))
-                    tar_fov = math.degrees(2*ang)
-
-                    curent_fov = vis.CameraFOV
-                    if(abs(curent_fov-tar_fov) > 0):
-                        if(curent_fov > tar_fov):
-                            tar_fov = curent_fov - 3
-                        elif(curent_fov < tar_fov):
-                            tar_fov = curent_fov + 3
-                    if(tar_fov > cam.max_fov):
-                        tar_fov = cam.max_fov
-                    if(tar_fov < cam.min_fov):
-                        tar_fov = cam.min_fov
-                    vis.CameraFOV = int(tar_fov)
-                    if(cam.type == 1):
-                        self.vis.sendUpdateUEImage(vis,0,RflySimIP)
-                    elif(cam.type == 7):
-                        cam.SetFOV(tar_fov)
-                    time.sleep(0.05)
-                    return True
+                            self.vis.sendUpdateUEImage(vis)
+                            time.sleep(0.1)
+                        return True
+                    else:
+                        print('Aim weapon fail, the object not exist')
+                        sys.exit(0)
             else:
-                print('Aim weapon fail, the object not exist')
+                print("no exist camera")
                 sys.exit(0)
+        else:
+            print("no exist drone")
+            pass
 
     def StartCaptureImg(self):
 
