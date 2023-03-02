@@ -1,25 +1,25 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>attack</name>
-  <version>0.0.0</version>
-  <description>The attack package</description>
+  <name>rflysim_msgs</name>
+  <version>0.1.0</version>
+  <description>The camera_ctrl package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="nvidia@todo.todo">nvidia</maintainer>
+  <maintainer email="wsh@todo.todo">wsh</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>Apache 2.0</license>
 
 
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/attack</url> -->
+  <!-- <url type="website">http://wiki.ros.org/camera_ctrl</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,33 +49,7 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>cv_bridge</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>image_transport</build_depend>
-  <build_depend>mavros_msgs</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>rospy</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>swarm_msgs</build_depend>
-  <build_depend>rflysim_msgs</build_depend>
-  <build_export_depend>cv_bridge</build_export_depend>
-  <build_export_depend>geometry_msgs</build_export_depend>
-  <build_export_depend>image_transport</build_export_depend>
-  <build_export_depend>mavros_msgs</build_export_depend>
-  <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>rospy</build_export_depend>
-  <build_export_depend>std_msgs</build_export_depend>
-  <build_export_depend>swarm_msgs</build_export_depend>
-  <build_export_depend>rflysim_msgs</build_export_depend>
-  <exec_depend>cv_bridge</exec_depend>
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>image_transport</exec_depend>
-  <exec_depend>mavros_msgs</exec_depend>
-  <exec_depend>roscpp</exec_depend>
-  <exec_depend>rospy</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>swarm_msgs</exec_depend>
-  <exec_depend>rflysim_msgs</exec_depend>
+  <depend>std_msgs</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

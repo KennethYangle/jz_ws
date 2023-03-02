@@ -13,17 +13,36 @@ import math
 import Perception
 import time
 import threading
+import rospy
+from rflysim_msgs.msg import CameraInfo
+from rospy import timer
 
 # 启用ROS发布模式
 VisionCaptureApi.isEnableRosTrans = True
 Perception.isEnableRosTrans = True
 vis = VisionCaptureApi.VisionCaptureApi()
 
+
 # VisionCaptureApi 中的配置函数
 vis.jsonLoad(1)  # 加载Config.json中的传感器配置文件
 vis.startImgCap()  # 开启取图循环，执行本语句之后，已经可以通过vis.Img[i]读取到图片了
 print('Start Image Reciver')
-RflySimIP = '192.168.3.4'
+
+
+
+#创建ros 发布器
+pub_list = []
+camera_info = []
+for i in range(len(vis.VisSensor)):
+    if(vis.VisSensor[i].TypeID == 1 or vis.VisSensor[i].TypeID ==7 ):
+        # camera_info += [CameraInfo]
+        pub_list += [rospy.Publisher("/rflysim/camera"+ str(i) + "_info",CameraInfo,queue_size=30)]
+
+        
+
+
+
+RflySimIP = '192.168.3.22'
 scale_width = 0.3 #占据图像宽度的比例
 def AutoAdaptCamera(per: Perception.Perception, copter_id, cam_id,scale_w):
     '''
@@ -100,6 +119,50 @@ perception.StartCaptureImg()
 
 th = threading.Thread(target=AutoAdaptCamera, args=(perception, 1, 0,scale_width))
 th.start()
+
+
+
+
+def PublishCamera(event):
+    global vis
+    global pub_list
+    global camera_info
+    global perception
+    copter_id = 1
+    drone = perception.drones[str(copter_id)]
+    for i in range(len(vis.VisSensor)):
+        if(vis.VisSensor[i].TypeID == 1 or vis.VisSensor[i].TypeID ==7 ):
+            cam = perception.GetCamera(1,vis.VisSensor[i].SeqID)
+            msg_cam = CameraInfo()
+            msg_cam.seq_id = int(vis.VisSensor[i].SeqID)
+            msg_cam.data_height = int(cam.data_height)
+            msg_cam.data_width = int(cam.data_width)
+            msg_cam.FOV = int(cam.GetFOV())
+            #因为这里都是相对与全局坐标系的
+            #ori_world_to_v = np.array(cam.GetOrientation()) - np.array(drone.orientation)
+            c2v_matrix = cam.trans_R * drone.trans_R.T #3 x 3
+            #rpy顺序
+            beta = -np.arcsin(c2v_matrix[2,0])
+            alpha = np.arctan2(c2v_matrix[2,1]/np.cos(beta),c2v_matrix[2,2]/np.cos(beta))
+            gamma = np.arctan2(c2v_matrix[1,0]/np.cos(beta),c2v_matrix[0,0]/np.cos(beta))
+            
+            msg_cam.roll = beta
+            msg_cam.pitch = alpha
+            msg_cam.yaw = gamma
+            matrix = cam.internal_matrix
+            msg_cam.K[0] = matrix[0,0]
+            msg_cam.K[2] = matrix[0,2]
+            msg_cam.K[4] = matrix[1,1]
+            msg_cam.K[5] = matrix[1,2]
+            msg_cam.K[8] = 1
+            msg_cam.R = c2v_matrix.flatten().tolist()[0]
+            # print("cam.R:", msg_cam.R)
+            pub_list[i].publish(msg_cam)
+        
+
+
+
+rospy.Timer(rospy.Duration(1/30),PublishCamera)
 
 # lastTime = time.time()
 # while True:

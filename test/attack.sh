@@ -16,7 +16,7 @@
 MAVID=1
 MAVNUM=1
 # RflySim仿真参数
-UE4IP="192.168.3.4"
+UE4IP="192.168.3.22"
 MAVX="0"
 MAVY="0"
 MAVZ="0"
@@ -26,7 +26,7 @@ echo "this MAV id :${MAVID}"
 
 
 # RflySim ROS接口
-rosrun RflySimClient server_ue4.py  & PID0=$!
+rosrun rflysim_node server_ue4.py  & PID0=$!
 sleep 3s
 
 # mavros and localization

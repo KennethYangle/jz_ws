@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   swarm_msgs
+  rflysim_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -110,7 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES attack
-#  CATKIN_DEPENDS cv_bridge geometry_msgs image_transport mavros_msgs roscpp rospy std_msgs swarm_msgs
+#  CATKIN_DEPENDS cv_bridge geometry_msgs image_transport mavros_msgs roscpp rospy std_msgs swarm_msgs rflysim_msgs
 #  DEPENDS system_lib
 )
 

@@ -1128,6 +1128,7 @@ class Perception:
         #     self.AimWeapon.camera_id = camera_id
         tar_w = cam.data_width * scale_w
         tar_w_2 = tar_w /2
+        tar_left_x = cam.half_w - tar_w_2
         drone = self.drones[str(cam.belong_copter)]
         # if(not cam.is_from_rflysim):
         #     return False
@@ -1150,6 +1151,21 @@ class Perception:
                 #     np.array(pos) - np.array(cam.position))
  # 获取到图像坐标系坐标
                 vis = self.vis.VisSensor[cam.seq_id]
+                pos_ = list(np.array(obj.box_apex)+np.array(obj.position))
+                ret_ = self.TransformObjs(drone.trans_R, cam.trans_R, cam.internal_matrix,
+                                             cam.position, drone.position, pos_, True, 3)
+                if(len(ret_) < 16):
+                    return False
+                sensor_coor = ret_[0:8]
+                img_coor = ret_[8:16]
+                points = np.array(img_coor)
+                idx_min = np.argmin(points, axis=0)
+                idx_max = np.argmax(points,axis= 0)
+                print("squre: ", points[idx_max[0]][0] - points[idx_min[0]][0] )
+                if(points[idx_max[0]][0] - points[idx_min[0]][0] > tar_w):
+                    #如果当目标框大于预设框的值，先聚焦再对焦
+                    mode = 1
+
                 if(mode == 0):
                     while True:
                         pos = list(np.array(obj.box_origin) +
@@ -1216,14 +1232,14 @@ class Perception:
                     return True
                 elif mode == 1:
                     # 调整焦距,对于云台相机更新RGB相机，红外相机参数会自动更新,随着距离变近，fov逐渐变大
-                    pos = list(np.array(obj.box_apex)+np.array(obj.position))
-                    ret = self.TransformObjs(drone.trans_R, cam.trans_R, cam.internal_matrix,
-                                             cam.position, drone.position, pos, True, 3)
-                    if(len(ret) < 16):
-                        return False
-                    sensor_coor = ret[0:8]
-                    img_coor = ret[8:16]
-                    points = np.array(img_coor)
+                    # pos_ = list(np.array(obj.box_apex)+np.array(obj.position))
+                    # ret_ = self.TransformObjs(drone.trans_R, cam.trans_R, cam.internal_matrix,
+                    #                          cam.position, drone.position, pos_, True, 3)
+                    # if(len(ret_) < 16):
+                    #     return False
+                    # sensor_coor = ret[0:8]
+                    # img_coor = ret[8:16]
+                    # points = np.array(img_coor)
                     # obj_w = np.max(points, axis=0) - \
                     #     np.min(points, axis=0)
                     # obj_h = np.max(points, axis=0) - \
@@ -1240,21 +1256,40 @@ class Perception:
                     # 这种一般不能发生，因为一旦发生说明控制算法需要大幅度优化或者aim_参数设置不合理
                     # pass
 
-                    dx = img_coor[7][0] - cam.half_w
-                    tar_left_x = cam.half_w - tar_w_2
-                    x_left = tar_left_x + dx
-                    idx_min = np.argmin(points, axis=0)
+                    # dx = img_coor[7][0] - cam.half_w
+                    alpha = cam.half_w - tar_w_2
+                    # x_left = tar_left_x + dx
+                    # idx_min = np.argmin(points, axis=0)
+                    # idx_max = np.argmax(points,axis= 0)
                     x_s = sensor_coor[idx_min[0]][0]
                     y_s = sensor_coor[idx_min[0]][1]
 
+                    cent_dx = cam.half_w - img_coor[7][0]
+                    
+                    if(cent_dx < 0):
+                        #这种情况是图像中心在目标框内,且目标框偏右
+                        x_s = sensor_coor[idx_max[0]][0]
+                        y_s = sensor_coor[idx_max[0]][1]
+                        alpha = cam.half_w + tar_w_2
+
+                    if( points[idx_min[0]][0] > cam.half_w):
+                        #整个框都在图像中心右侧
+                        if(points[idx_max[0]][0] > cam.half_w + tar_w_2):
+                            #目标框又顶点在targt_框的右侧，需缩小
+                            x_s = sensor_coor[idx_max[0]][0]
+                            y_s = sensor_coor[idx_max[0]][1]
+                            alpha = cam.half_w + tar_w_2
+                        
+                    # if(points[idx_min[0]] < 0):
+
                     val = cam.half_w * y_s / \
-                        ((x_left-cam.half_w)*x_s)
-                    val = val
+                        ((alpha-cam.half_w)*x_s)
+                    #val = val
                     ang = abs(math.atan(val))
                     tar_fov = math.degrees(2*ang)
 
                     curent_fov = vis.CameraFOV
-                    if(abs(curent_fov-tar_fov) > 0):
+                    if(abs(curent_fov-tar_fov) > 3):
                         if(curent_fov > tar_fov):
                             tar_fov = curent_fov - 3
                         elif(curent_fov < tar_fov):

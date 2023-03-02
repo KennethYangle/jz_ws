@@ -10,6 +10,7 @@ import time
 import threading
 from swarm_msgs.msg import Action
 from swarm_msgs.msg import BoundingBox, BoundingBoxes
+from rflysim_msgs.msg import CameraInfo
 from geometry_msgs.msg import *
 from std_msgs.msg import Float32MultiArray
 from std_srvs.srv import Empty
@@ -32,6 +33,7 @@ pos_i = [0, 0, 0, 0, 0]
 image_failed_cnt = 0
 command = AttitudeTarget()
 dj_action = Action()
+cam_info = {"roll":0., "pitch":0., "yaw":0., "foc":320, "R":np.identity(3)}
 
 
 def spin():
@@ -44,11 +46,10 @@ def mav_pose_cb(msg):
     mav_yaw = math.atan2(2*(q0*q3 + q1*q2), 1-2*(q2*q2 + q3*q3))
     mav_pitch = math.asin(2*(q0*q2 - q1*q3))
     mav_roll = math.atan2(2*(q0*q1+q2*q3), 1-2*(q1*q1 + q2*q2))
-    R_ae = np.array([[q0**2+q1**2-q2**2-q3**2, 2*(q1*q2-q0*q3), 2*(q1*q3+q0*q2)],
+    # FLU to ENU
+    mav_R = np.array([[q0**2+q1**2-q2**2-q3**2, 2*(q1*q2-q0*q3), 2*(q1*q3+q0*q2)],
                       [2*(q1*q2+q0*q3), q0**2-q1**2+q2**2-q3**2, 2*(q2*q3-q0*q1)],
                       [2*(q1*q3-q0*q2), 2*(q2*q3+q0*q1), q0**2-q1**2-q2**2+q3**2]])
-    R_ba = np.array([[0,1,0], [-1,0,0], [0,0,1]]) #mavros_coordinate to baselink_coordinate  // body to enu  # body: right-front-up3rpos_est_body)
-    mav_R = R_ae.dot(R_ba)
 
 def mav_vel_cb(msg):
     global mav_vel
@@ -86,6 +87,14 @@ def expect_action_cb(msg):
     global dj_action
     dj_action = msg
 
+def camera_info_cb(msg):
+    global cam_info
+    cam_info["roll"] = msg.roll
+    cam_info["pitch"] = msg.pitch
+    cam_info["yaw"] = msg.yaw
+    cam_info["foc"] = msg.K[0]
+    cam_info["R"] = np.array(msg.R).reshape(3,3)
+
 
 if __name__=="__main__":
     src_path = os.path.join(rospkg.RosPack().get_path("offboard_pkg"), "..")
@@ -112,6 +121,7 @@ if __name__=="__main__":
     rospy.Subscriber("mavros/local_position/velocity_local", TwistStamped, mav_vel_cb)
     rospy.Subscriber("tracker/pos_image", BoundingBoxes, pos_image_cb)
     rospy.Subscriber('expect_action'+str(param_id), Action, expect_action_cb)
+    rospy.Subscriber("rflysim/camera1_info", CameraInfo, camera_info_cb)
 
     local_vel_pub = rospy.Publisher('DJ_cmd', AttitudeTarget, queue_size=10)
     print("Publisher and Subscriber Created")
@@ -126,7 +136,7 @@ if __name__=="__main__":
         print("mav_pos: {}\nmav_vel: {}".format(mav_pos, mav_vel))
 
         if dj_action.dj == True:
-            cmd = u.RotateAttackController(pos_info, pos_i, image_center)
+            cmd = u.RotateAttackController(pos_info, pos_i, image_center, cam_info)
             # 识别到图像才进行角速度控制
             if pos_i[1] > 0:
                 command.orientation = cmd[0]

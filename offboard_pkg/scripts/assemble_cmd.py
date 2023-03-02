@@ -89,11 +89,11 @@ class Px4Controller:
                 time.sleep(0.5)
                 # dis = np.linalg.norm(targetPos - self.mav_pos)
 
-            self.offboard_state = self.offboard()
-            print("开始进入Offboard模式")
-
             # 保持前飞一段
             for i in range(20):
+                self.offboard_state = self.offboard()
+                # print("开始进入Offboard模式")
+
                 q = Quaternion()
                 q.w = 1.
                 q.x = 0.

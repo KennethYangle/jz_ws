@@ -81,3 +81,13 @@
 ![image-20220415102648899](readme.assets/image-20220415102648899.png)
 
 ![](readme.assets/image-20220415102526570.png)
+
+
+# 修改IP
+## Windows端
+1. 修改`Config.json`内IP
+2. `.bat`里设置全局广播，`255.255.255.255`
+
+## Linux端
+1. 启动脚本如`attack.sh`里`UE4IP="192.168.3.22"`
+2. `RflySim/rflysim_node/scripts/server_ue4.py`里的`RflySimIP = '192.168.3.22'`

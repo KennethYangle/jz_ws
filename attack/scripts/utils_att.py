@@ -24,22 +24,30 @@ class Utils(object):
 
         self.cnt = 1
         #camrea frame to mavros_body frame
-        self.R_cb = np.array([[1,0,0],\
+        self.R_c0b = np.array([[1,0,0],\
                              [0,0,1],\
                              [0,-1,0]])
         self.n_cc = np.array([0,0,1])
+        #FRD frame to FLU frame
+        self.R_b_trans = np.array([[1,0,0],\
+                                   [0,-1,0],\
+                                   [0,0,-1]])
 
 
-    def RotateAttackController(self, pos_info, pos_i, image_center):
+    def RotateAttackController(self, pos_info, pos_i, image_center, cam_info):
         #calculate nc,the first idex(c:camera,b:body,e:earth) represent the frmae, the second idex(c,o) represent the camera or obstacle
-        n_bc = self.R_cb.dot(self.n_cc)
+        n_bc = self.R_c0b.dot(self.n_cc)
         n_ec = pos_info["mav_R"].dot(n_bc)
         
         #calculate the no
-        n_co = np.array([pos_i[0] - self.u0, pos_i[1] - self.v0, self.f], dtype=np.float64)
+        # n_co = np.array([pos_i[0] - self.u0, pos_i[1] - self.v0, cam_info["foc"]], dtype=np.float64)
+        # n_co /= np.linalg.norm(n_co)
+        # n_bo = self.R_c0b.dot(n_co)
+        # n_eo = pos_info["mav_R"].dot(n_bo)
+        n_co = np.array([cam_info["foc"], pos_i[0] - self.u0, pos_i[1] - self.v0], dtype=np.float64)    # 相机系也定义为FRD
         n_co /= np.linalg.norm(n_co)
-        n_bo = self.R_cb.dot(n_co)
-        n_eo = pos_info["mav_R"].dot(n_bo)
+        n_bo = cam_info["R"].dot(n_co)      # 转到载具系FRD
+        n_eo = pos_info["mav_R"].dot(self.R_b_trans.dot(n_bo))  # 先转到FLU再转到ENU
         
         # calculate the v_d and a_d
         g = [0, 0, 9.8]
@@ -62,6 +70,7 @@ class Utils(object):
         # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/12, euler[2])
         q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/17.5, euler[2])
         # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/30, euler[2])
+        # q_array = quaternion_from_euler(-euler[0], -euler[1]+cam_info["pitch"]+np.pi/17.5, euler[2]+cam_info["yaw"])
 
         q = Quaternion()
         # q.w = 0.996
