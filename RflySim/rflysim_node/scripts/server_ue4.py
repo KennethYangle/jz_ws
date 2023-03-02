@@ -67,8 +67,10 @@ def AutoAdaptCamera(per: Perception.Perception, copter_id, cam_id,scale_w):
             # time.sleep(0.01)
             is_weapon = True
         # 没有目标的时候接着扫描
-        if (is_weapon and per.AimWeapon(camera, 1,RflySimIP,scale_w)):
+        # if (is_weapon or per.AimWeapon(camera, 1,RflySimIP,scale_w)):
+        if (is_weapon ):
             # print("adapt camera fov")
+            per.AimWeapon(camera, 1,RflySimIP,scale_w)
             continue
         is_weapon = False  # 重新扫描
         ori = per.GetCameraOri(copter_id, cam_id)

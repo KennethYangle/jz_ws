@@ -29,7 +29,7 @@
             "MaxFOV":170,
             "MinFOV":5,
             "SendProtocol":[0,192,168,3,56,9998,0,0],
-            "CameraFOV":90,
+            "CameraFOV":120,
             "SensorPosXYZ":[11,0,2],
             "SensorAngEular":[0,0,0],
             "MaxRotation":[0,-20,60],
