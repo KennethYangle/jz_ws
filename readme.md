@@ -91,3 +91,8 @@
 ## Linux端
 1. 启动脚本如`attack.sh`里`UE4IP="192.168.3.22"`
 2. `RflySim/rflysim_node/scripts/server_ue4.py`里的`RflySimIP = '192.168.3.22'`
+
+# 硬件在环仿真
+`USE_PIX`设置为`true`
+
+**注意**：确认`bs_assis/launch/bs_mavros.launch`里的端口和波特率。
