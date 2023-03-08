@@ -43,7 +43,7 @@ for i in range(len(vis.VisSensor)):
 
 
 RflySimIP = '192.168.3.22'
-scale_width = 0.3 #占据图像宽度的比例
+scale_width = 0.2 #占据图像宽度的比例
 def AutoAdaptCamera(per: Perception.Perception, copter_id, cam_id,scale_w):
     '''
     per: 红外接受主要类；
@@ -108,7 +108,8 @@ mav.sendUE4PosScale(106, 3, 0, [2320, 100, -10], [0, 0, 0], [10, 10, 10])
 # mav.sendUE4PosNew(106,3,[0,0,0],[0,0,0],[0,0,0],[83.562,38.720,6145.686,0,0,0,0,0], 0)
 mav.sendUE4PosScale(1, 200, 0, [0,0,0])
 time.sleep(0.1)
-mav.sendUE4PosScale(177, 400, 0, [7000,1000,-10], [0,0,0], [30, 30, 30])  # 坦克，NED
+# mav.sendUE4PosScale(177, 400, 0, [7000,1000,-10], [0,0,0], [30, 30, 30])  # 坦克，NED
+mav.sendUE4PosScale(177, 400, 0, [52018, 17913, -178.5], [0,0,0], [30, 30, 30])  # 坦克，NED
 # mav.sendUE4PosNew(177,400,[0,0,0],[0,0,0],[0,0,0],[83.616,38.712,1149.179,0,0,0,0,0], 0)
 time.sleep(2)
 perception = Perception.Perception(mav, vis)

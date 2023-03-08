@@ -352,7 +352,8 @@ class Perception:
                     else:
                         self.pairs[str(self.rgb_camera[str(pair[0])])] = pair
                         copter_id = self.rgb_camera[str(pair[0])]
-                        cam = self.drones[str(copter_id)].infrareds[str(pair[1])]
+                        cam = self.drones[str(copter_id)
+                                          ].infrareds[str(pair[1])]
                         cam.is_from_rflysim = True
         elif isinstance(pairs, tuple):
             if str(pairs[0]) in self.rgb_camera.keys() and str(pairs[1]) in self.inf_camera.keys():
@@ -411,7 +412,7 @@ class Perception:
             objs = objs + [copter_id]
         self.mav.reqCamCoptObj(1, objs)
         self.mav.reqCamCoptObj(0, cams)
-        print("req objs: ",objs, " sensor: ",cams)
+        print("req objs: ", objs, " sensor: ", cams)
         time.sleep(2)
 
         self.mav.initUE4MsgRec()
@@ -511,8 +512,10 @@ class Perception:
                                 inf_id)].position = list(r_obj.PosUE)
                             self.drones[str(obj.belong_copter)].infrareds[str(
                                 inf_id)].orientation = list(r_obj.angEuler)
-                            self.drones[str(obj.belong_copter)].infrareds[str(inf_id)].SetFOV(r_obj.CameraFOV)
-                            self.drones[str(obj.belong_copter)].infrareds[str(inf_id)].SetImgSize(r_obj.DataWidth,r_obj.DataHeight)
+                            self.drones[str(obj.belong_copter)].infrareds[str(
+                                inf_id)].SetFOV(r_obj.CameraFOV)
+                            self.drones[str(obj.belong_copter)].infrareds[str(
+                                inf_id)].SetImgSize(r_obj.DataWidth, r_obj.DataHeight)
                             # print("cam, angle: ", r_obj.angEuler,
                             #       " degree: ", np.array(r_obj.angEuler) / math.pi * 180)
                             self.drones[str(obj.belong_copter)].infrareds[str(
@@ -1114,7 +1117,7 @@ class Perception:
 
         pass
 
-    def AimWeapon(self, cam: Camera, mode: int,RflySimIP:str,scale_w) -> bool:
+    def AimWeapon(self, cam: Camera, mode: int, RflySimIP: str, scale_w) -> bool:
         '''
             武器锁定目标,这里只有个调用了GetImg 才会更新数据
             camera_id: 相机id,
@@ -1127,16 +1130,18 @@ class Perception:
         #     self.AimWeapon.copter_id = copter_id
         #     self.AimWeapon.camera_id = camera_id
         tar_w = cam.data_width * scale_w
-        tar_w_2 = tar_w /2
+        tar_w_2 = tar_w / 2
         tar_left_x = cam.half_w - tar_w_2
         drone = self.drones[str(cam.belong_copter)]
         # if(not cam.is_from_rflysim):
         #     return False
-        
+
         if(cam.type == 1 and str(drone.id) in self.pairs.keys()):
-           cam.insight_obj = drone.infrareds[str(self.pairs[str(drone.id)][1])].insight_obj
+            cam.insight_obj = drone.infrareds[str(
+                self.pairs[str(drone.id)][1])].insight_obj
         if(not len(cam.insight_obj) == 1):
             # 视场内只会有一个目标出现，如果没有目标进行扫描
+            print("numbers of object greater than one or not find object")
             return False
         else:
             if str(cam.insight_obj[0] in self.objs.keys()):
@@ -1153,22 +1158,20 @@ class Perception:
                 vis = self.vis.VisSensor[cam.seq_id]
                 pos_ = list(np.array(obj.box_apex)+np.array(obj.position))
                 ret_ = self.TransformObjs(drone.trans_R, cam.trans_R, cam.internal_matrix,
-                                             cam.position, drone.position, pos_, True, 3)
+                                          cam.position, drone.position, pos_, True, 3)
                 if(len(ret_) < 16):
                     return False
                 sensor_coor = ret_[0:8]
                 img_coor = ret_[8:16]
                 points = np.array(img_coor)
                 idx_min = np.argmin(points, axis=0)
-                idx_max = np.argmax(points,axis= 0)
-                # print("squre: ", points[idx_max[0]][0] - points[idx_min[0]][0] )
-                if( cam.FOV >= cam.max_fov):
-                    # print("Cam FOV",cam.FOV)
-                    return True
-                if(points[idx_max[0]][0] - points[idx_min[0]][0] > tar_w ):
-                    #如果当目标框大于预设框的值，先聚焦再对焦
-                    mode = 1
+                idx_max = np.argmax(points, axis=0)
+                print("squre: ", points[idx_max[0]][0] - points[idx_min[0]]
+                      [0], "tar_w: ", tar_w, " fov: ", cam.FOV)
 
+                if(points[idx_max[0]][0] - points[idx_min[0]][0] > tar_w):
+                    # 如果当目标框大于预设框的值，先聚焦再对焦
+                    mode = 1
                 if(mode == 0):
                     while True:
                         pos = list(np.array(obj.box_origin) +
@@ -1227,7 +1230,7 @@ class Perception:
                         tran = [vis.SensorAngEular[0], pitch, yaw]
                         if(cam.type == 1):
                             vis.SensorAngEular = list(tran)
-                            self.vis.sendUpdateUEImage(vis,0,RflySimIP)
+                            self.vis.sendUpdateUEImage(vis, 0, RflySimIP)
                         elif(cam.type == 7):
                             vis.SensorAngEular = list(tran)
                             cam.SetOrientation(tran)
@@ -1247,7 +1250,7 @@ class Perception:
                     #     np.min(points, axis=0)
                     # obj_h = np.max(points, axis=0) - \
                     #     np.min(points, axis=0)
-                    
+
                     # tar_h = cam.data_height * aim_
                     # top_left = [img_coor[0][0]-tar_w /
                     #             2, img_coor[0][1]-tar_w/2]
@@ -1258,7 +1261,10 @@ class Perception:
                     # 按理来说根据参数变焦不应该超图像边界(目标box中心位置应该在图像几何中心)，但是由于控制精度以及相机旋转约束，不能保证目标中心位置在图像中心
                     # 这种一般不能发生，因为一旦发生说明控制算法需要大幅度优化或者aim_参数设置不合理
                     # pass
-
+                    if(cam.FOV >= cam.max_fov):
+                        return True
+                    if(cam.FOV <= cam.min_fov and points[idx_max[0]][0] - points[idx_min[0]][0] < tar_w):
+                        return True
                     # dx = img_coor[7][0] - cam.half_w
                     alpha = cam.half_w - tar_w_2
                     # x_left = tar_left_x + dx
@@ -1268,21 +1274,21 @@ class Perception:
                     y_s = sensor_coor[idx_min[0]][1]
 
                     cent_dx = cam.half_w - img_coor[7][0]
-                    
+
                     if(cent_dx < 0):
-                        #这种情况是图像中心在目标框内,且目标框偏右
+                        # 这种情况是图像中心在目标框内,且目标框偏右
                         x_s = sensor_coor[idx_max[0]][0]
                         y_s = sensor_coor[idx_max[0]][1]
                         alpha = cam.half_w + tar_w_2
 
-                    if( points[idx_min[0]][0] > cam.half_w):
-                        #整个框都在图像中心右侧
+                    if(points[idx_min[0]][0] > cam.half_w):
+                        # 整个框都在图像中心右侧
                         if(points[idx_max[0]][0] > cam.half_w + tar_w_2):
-                            #目标框又顶点在targt_框的右侧，需缩小
+                            # 目标框又顶点在targt_框的右侧，需缩小
                             x_s = sensor_coor[idx_max[0]][0]
                             y_s = sensor_coor[idx_max[0]][1]
                             alpha = cam.half_w + tar_w_2
-                        
+
                     # if(points[idx_min[0]] < 0):
 
                     val = cam.half_w * y_s / \
@@ -1303,7 +1309,7 @@ class Perception:
                         tar_fov = cam.min_fov
                     vis.CameraFOV = int(tar_fov)
                     if(cam.type == 1):
-                        self.vis.sendUpdateUEImage(vis,0,RflySimIP)
+                        self.vis.sendUpdateUEImage(vis, 0, RflySimIP)
                     elif(cam.type == 7):
                         cam.SetFOV(tar_fov)
                     time.sleep(0.05)

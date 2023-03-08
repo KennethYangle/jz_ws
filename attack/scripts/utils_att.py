@@ -67,8 +67,8 @@ class Utils(object):
         M[:3,:3] = R
         # q_array = quaternion_from_matrix(M)
         euler = euler_from_matrix(M)
-        # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/12, euler[2])
-        q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/17.5, euler[2])
+        q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/8.0, euler[2])
+        # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/17.5, euler[2])
         # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/30, euler[2])
         # q_array = quaternion_from_euler(-euler[0], -euler[1]+cam_info["pitch"]+np.pi/17.5, euler[2]+cam_info["yaw"])
 
