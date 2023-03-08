@@ -28,7 +28,7 @@ REM E.g., fixed-wing aircraft: PX4SitlFrame=plane; small cars: PX4SitlFrame=rove
 
 REM Set the map, use index or name of the map on CopterSim
 REM e.g., UE4_MAP=1 equals to UE4_MAP=Grasslands
-SET UE4_MAP=Desert
+SET UE4_MAP=Desert_online
 
 REM Set the origin x,y position (m) and yaw angle (degree) at the map
 SET /a ORIGIN_POS_X=0

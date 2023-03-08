@@ -41,15 +41,16 @@ SET /a VEHICLE_INTERVAL=2
 
 REM Set broadcast to other computer; 0: only this computer, 1: broadcast; or use IP address to increase speed
 REM e.g., IS_BROADCAST=0 equals to IS_BROADCAST=127.0.0.1, IS_BROADCAST=1 equals to IS_BROADCAST=255.255.255.255
-SET IS_BROADCAST=192.168.31.253
+SET IS_BROADCAST=1
 
 REM Set UDP data mode; 0: UDP_FULL, 1:UDP_Simple, 2: Mavlink_Full, 3: Mavlink_simple. input number or string
 REM e.g., UDPSIMMODE=1 equals to UDPSIMMODE=UDP_Simple
-SET UDPSIMMODE=1
+SET UDPSIMMODE=2
 
 REM Set the path of the RflySim tools
 SET PSP_PATH=C:\PX4PSP
 SET PSP_PATH_LINUX=/mnt/c/PX4PSP
+SET CURRENT_PATH=%cd%
 C:
 
 :Top
@@ -130,6 +131,11 @@ goto loopBegin
 
 REM Set ToolChainType 1:Win10WSL 3:Cygwin
 SET /a ToolChainType=1
+
+
+
+choice /t 3 /d y /n >nul
+%PSP_PATH%\Python38\python.exe %CURRENT_PATH%\client_ue4.py
 
 
 if "%IS_BROADCAST%" == "0" (

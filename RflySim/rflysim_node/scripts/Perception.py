@@ -1166,8 +1166,8 @@ class Perception:
                 points = np.array(img_coor)
                 idx_min = np.argmin(points, axis=0)
                 idx_max = np.argmax(points, axis=0)
-                print("squre: ", points[idx_max[0]][0] - points[idx_min[0]]
-                      [0], "tar_w: ", tar_w, " fov: ", cam.FOV)
+                # print("squre: ", points[idx_max[0]][0] - points[idx_min[0]]
+                #       [0], "tar_w: ", tar_w, " fov: ", cam.FOV)
 
                 if(points[idx_max[0]][0] - points[idx_min[0]][0] > tar_w):
                     # 如果当目标框大于预设框的值，先聚焦再对焦

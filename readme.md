@@ -96,3 +96,11 @@
 `USE_PIX`设置为`true`
 
 **注意**：确认`bs_assis/launch/bs_mavros.launch`里的端口和波特率。
+
+# 据止运行方法
+## 1. 准备
+替换`32s/UseIP/`文件夹内`Desert_online.png`和`Desert_online.txt`到`C:\PX4PSP\CopterSim\external\map`下，修复触地问题。
+## 2. Windows
+双击`32s/UseIP/HITLRunUdpSimple1_10-UE4.bat`运行UE4版本硬件在环仿真脚本
+## NX
+`jz_ws`路径下运行`./src/test/attack.sh`一键启动

@@ -154,7 +154,7 @@ goto loopSqrt
 
 REM UE4Path
 cd %PSP_PATH%\RflySim3D
-tasklist|find /i "RflySim3D.exe" || start %PSP_PATH%\RflySimUE5\RflySim3D.exe
+tasklist|find /i "RflySim3D.exe" || start %PSP_PATH%\RflySim3D\RflySim3D.exe
 choice /t 5 /d y /n >nul
 
 

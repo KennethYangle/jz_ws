@@ -45,7 +45,7 @@ SET IS_BROADCAST=1
 
 REM Set UDP data mode; 0: UDP_FULL, 1:UDP_Simple, 2: Mavlink_Full, 3: Mavlink_simple. input number or string
 REM e.g., UDPSIMMODE=1 equals to UDPSIMMODE=UDP_Simple
-SET UDPSIMMODE=2
+SET UDPSIMMODE=1
 
 REM Set the path of the RflySim tools
 SET PSP_PATH=C:\PX4PSP
@@ -154,7 +154,7 @@ goto loopSqrt
 
 REM UE4Path
 cd %PSP_PATH%\RflySim3D
-tasklist|find /i "RflySim3D.exe" || start %PSP_PATH%\RflySim3D\RflySim3D.exe
+tasklist|find /i "RflySim3D.exe" || start %PSP_PATH%\RflySimUE5\RflySim3D.exe
 choice /t 5 /d y /n >nul
 
 
