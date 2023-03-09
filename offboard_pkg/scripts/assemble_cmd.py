@@ -12,6 +12,7 @@ from swarm_msgs.msg import Action
 from mavros_msgs.msg import State, PositionTarget, AttitudeTarget, HomePosition
 from mavros_msgs.srv import CommandBool, SetMode, CommandTOL
 from geometry_msgs.msg import PoseStamped, TwistStamped
+from tf.transformations import quaternion_from_matrix, euler_from_matrix, quaternion_from_euler
 
 
 # 无人机控制类
@@ -31,12 +32,14 @@ class Px4Controller:
         self.is_initialize_pos = False
         self.mav_yaw = 0
         self.mav_pos = np.array([0., 0., 0.])
+        self.mav_vel = np.array([0., 0., 0.])
         self.mav_R = np.identity(3)
         self.uavPosGPSHome = [28.1405220, 112.9825003, 53.220]
 
         # mavros topics
         self.local_pose_sub = rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.local_pose_callback)
-        self.global_home_sub = rospy.Subscriber("mavros/home_position/home", HomePosition, self.mav_home_cb)
+        self.local_vel_sub = rospy.Subscriber("/mavros/local_position/velocity_local", TwistStamped, self.local_vel_callback)
+        self.global_home_sub = rospy.Subscriber("/mavros/home_position/home", HomePosition, self.mav_home_cb)
         self.local_vel_pub =  rospy.Publisher('/mavros/setpoint_raw/local', PositionTarget, queue_size=10)
         self.local_att_pub =  rospy.Publisher('/mavros/setpoint_raw/attitude', AttitudeTarget, queue_size=10)
         self.vel_pub = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel', TwistStamped, queue_size=10)                     # 发布速度指令（重要）
@@ -71,10 +74,11 @@ class Px4Controller:
                 self.rate.sleep()
 
         if self.scene == "jz":           # 拒止项目
-            # targetPos=[0, 400, 50]    # ENU
-            targetPos=[1305, 4933, 97]    # ENU
+            # takeoff_pos=[0, 400, 50]    # ENU
+            # takeoff_pos=[1305, 4933, 97]    # ENU
+            takeoff_pos=[1305, 4533, 97]    # ENU
             self.geo = EarthModel()
-            lla = self.geo.enu2lla(targetPos, self.uavPosGPSHome)
+            lla = self.geo.enu2lla(takeoff_pos, self.uavPosGPSHome)
             lat, lon, alt = lla[0], lla[1], lla[2]
 
             print("latitude={}, longitude={}, altitude={}".format(lat, lon, alt))
@@ -82,13 +86,13 @@ class Px4Controller:
             rospy.loginfo("Taking off")
             time.sleep(0.5)
 
-            # dis = np.linalg.norm(targetPos - self.mav_pos)
-            while abs(self.mav_pos[1] - targetPos[1]) > 50:
+            # dis = np.linalg.norm(takeoff_pos - self.mav_pos)
+            while abs(self.mav_pos[1] - takeoff_pos[1]) > 50:
                 print("起飞中...")
                 print(self.mav_pos)
                 # self.takeoffService(latitude=lat, longitude=lon, altitude=alt)
                 time.sleep(0.5)
-                # dis = np.linalg.norm(targetPos - self.mav_pos)
+                # dis = np.linalg.norm(takeoff_pos - self.mav_pos)
 
             # 保持前飞一段
             for i in range(20):
@@ -103,6 +107,57 @@ class Px4Controller:
                 # self.moveByBodyRateThrust(0, -0.1, 0, 0.75)  # 可行值：(0.5, 0, 0, 0.75)
                 # print("moveByBodyRateThrust")
                 self.rate.sleep()
+
+            # 盘旋
+            
+            # 盘旋：目标位置
+            target_pos = np.array([1791.3, 5201.8, 17.85])
+            circle_R = np.linalg.norm(self.mav_pos[:2] - target_pos[:2])
+            circle_H = self.mav_pos[2]
+            circle_V = np.linalg.norm(self.mav_vel)
+            # 盘旋：微分平坦参数
+            Kp = 0.05
+            Kv = 0.2
+
+            for i in range(4000):
+                # 微分平坦跟踪圆
+                vec_p = self.mav_pos[:2] - target_pos[:2]
+                vec_unit_p = vec_p / np.linalg.norm(vec_p)
+                mav_pos_d = target_pos + np.array([vec_unit_p[0] * circle_R, vec_unit_p[1] * circle_R, circle_H])
+                # print("mav_pos_d: {}, mav_pos: {}".format(mav_pos_d, self.mav_pos))
+
+                mav_vel_d = circle_V * np.array([-vec_unit_p[1], vec_unit_p[0], 0.])
+                if mav_vel_d.dot(self.mav_vel) < 0:
+                    mav_vel_d = -mav_vel_d
+                # print("mav_vel_d: {}, mav_vel: {}".format(mav_vel_d, self.mav_vel))
+
+                an_norm = circle_V * circle_V / circle_R
+                an = np.array([-vec_unit_p[0] * an_norm, -vec_unit_p[1] * an_norm, 0.])
+                a_d = an + Kv * (mav_vel_d - self.mav_vel) + Kp * (mav_pos_d - self.mav_pos)
+                # print("an: {}, a_d: {}".format(an, a_d))
+
+                # 微分平坦控制
+                g = np.array([0, 0, 9.8])
+                V = np.linalg.norm(self.mav_vel)
+                r1 = self.mav_vel / V
+                a_w1 = r1.dot(a_d - g)      # 标量
+                a_n = a_d - g - a_w1 * r1   # 矢量
+                a_w3 = -np.linalg.norm(a_n) # 标量
+                r3 = a_n / a_w3
+                r2 = np.cross(r3, r1)
+                R = np.array([r1 ,r2, r3]).T
+                M = np.identity(4)
+                M[:3,:3] = R
+                # q_array = quaternion_from_matrix(M)
+                euler = euler_from_matrix(M)
+                q_array = quaternion_from_euler(-euler[0], -euler[1], euler[2])
+
+                q = Quaternion()
+                q.x, q.y, q.z, q.w = q_array[0], q_array[1], q_array[2], q_array[3]
+                thrust = 0.75
+                self.moveByAttitudeThrust(q, thrust)
+                self.rate.sleep()
+
 
 
         if self.scene == "freeflight":      # test for freeflight.py
@@ -152,6 +207,10 @@ class Px4Controller:
             [2*(q1*q3-q0*q2), 2*(q2*q3+q0*q1), q0**2-q1**2-q2**2+q3**2]
         ])
 
+    # 无人机位置速度回调函数
+    def local_vel_callback(self, msg):
+        self.is_initialize_vel = True
+        self.mav_vel = np.array([msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z])
     
     def mav_home_cb(self, msg):
         self.uavPosGPSHome = [msg.geo.latitude, msg.geo.longitude, msg.geo.altitude]

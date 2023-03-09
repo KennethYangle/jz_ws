@@ -50,7 +50,7 @@ class Utils(object):
         n_eo = pos_info["mav_R"].dot(self.R_b_trans.dot(n_bo))  # 先转到FLU再转到ENU
         
         # calculate the v_d and a_d
-        g = [0, 0, 9.8]
+        g = np.array([0, 0, 9.8])
         V = np.linalg.norm(pos_info["mav_vel"])
         v_d = (V + 1) * n_eo
         a_d = 0.4 * (v_d - pos_info["mav_vel"])
@@ -67,10 +67,10 @@ class Utils(object):
         M[:3,:3] = R
         # q_array = quaternion_from_matrix(M)
         euler = euler_from_matrix(M)
-        q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/7.9, euler[2])
+        # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/7.9, euler[2])     # ly初值打击，target_pos = np.array([1791.3, 5201.8, 17.85])，takeoff_pos=[1305, 4933, 97]
+        q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/10, euler[2])        # ly初值打击+盘旋，target_pos = np.array([1791.3, 5201.8, 17.85])，takeoff_pos=[1305, 4533, 97]
         # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/17.5, euler[2])
         # q_array = quaternion_from_euler(-euler[0], -euler[1]+np.pi/30, euler[2])
-        # q_array = quaternion_from_euler(-euler[0], -euler[1]+cam_info["pitch"]+np.pi/17.5, euler[2]+cam_info["yaw"])
 
         q = Quaternion()
         # q.w = 0.996
