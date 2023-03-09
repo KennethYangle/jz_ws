@@ -76,7 +76,7 @@ def pos_image_cb(msg):
         image_failed_cnt += 1
     else:
         image_failed_cnt = 0
-    if image_failed_cnt <= 2 and image_failed_cnt > 0:      # 20有点长
+    if image_failed_cnt <= 20 and image_failed_cnt > 0:      # 20有点长
         pass
     else:
         pos_i[0] = x
@@ -135,16 +135,13 @@ if __name__=="__main__":
         pos_info = {"mav_pos": mav_pos, "mav_vel": mav_vel, "mav_R": mav_R}
         print("mav_pos: {}\nmav_vel: {}".format(mav_pos, mav_vel))
 
-        if dj_action.dj == True:
-            cmd = u.RotateAttackController(pos_info, pos_i, image_center, cam_info)
-            # 识别到图像才进行角速度控制
-            if pos_i[1] > 0:
-                command.orientation = cmd[0]
-                command.thrust = cmd[1]
-                print("cmd: {}".format(cmd))
-            # # 否则hover
-            else:
-                command = AttitudeTarget()
+        cmd = u.RotateAttackController(pos_info, pos_i, image_center, cam_info)
+        # 识别到图像才进行角速度控制
+        if pos_i[1] > 0:
+            command.orientation = cmd[0]
+            command.thrust = cmd[1]
+            print("cmd: {}".format(cmd))
+        # # 否则hover
         else:
             command = AttitudeTarget()
         print("command: {}".format([command.orientation, command.thrust]))

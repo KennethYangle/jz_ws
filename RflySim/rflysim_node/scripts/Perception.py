@@ -1155,6 +1155,9 @@ class Perception:
                 # dist = np.linalg.norm(
                 #     np.array(pos) - np.array(cam.position))
  # 获取到图像坐标系坐标
+                if(len(obj.box_apex)==0 or len(obj.position) == 0):
+                    print("not recv data from RflySim")
+                    return False
                 vis = self.vis.VisSensor[cam.seq_id]
                 pos_ = list(np.array(obj.box_apex)+np.array(obj.position))
                 ret_ = self.TransformObjs(drone.trans_R, cam.trans_R, cam.internal_matrix,
