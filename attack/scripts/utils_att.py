@@ -53,7 +53,7 @@ class Utils(object):
         g = np.array([0, 0, 9.8])
         V = np.linalg.norm(pos_info["mav_vel"])
         v_d = (V + 1) * n_eo
-        a_d = 0.6 * (v_d - pos_info["mav_vel"])
+        a_d = 0.4 * (v_d - pos_info["mav_vel"])
 
         # calculate R_d
         r1 = pos_info["mav_vel"] / V

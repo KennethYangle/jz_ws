@@ -76,7 +76,7 @@ class Px4Controller:
         if self.scene == "jz":           # 拒止项目
             # takeoff_pos=[0, 400, 50]    # ENU
             # takeoff_pos=[1305, 4933, 97]    # ENU
-            takeoff_pos=[1305, 1733, 97]    # ENU
+            takeoff_pos=[-1305, 1833, 97]    # ENU
             self.geo = EarthModel()
             lla = self.geo.enu2lla(takeoff_pos, self.uavPosGPSHome)
             lat, lon, alt = lla[0], lla[1], lla[2]
@@ -111,7 +111,7 @@ class Px4Controller:
             # 盘旋
             
             # 盘旋：目标位置
-            target_pos = np.array([1791.3, 2201.8, 17.85])
+            target_pos = np.array([-1791.3, 2201.8, 17.85])
             circle_R = np.linalg.norm(self.mav_pos[:2] - target_pos[:2])
             circle_H = self.mav_pos[2]
             circle_V = np.linalg.norm(self.mav_vel)
