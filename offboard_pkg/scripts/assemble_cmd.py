@@ -119,7 +119,7 @@ class Px4Controller:
             Kp = 0.05
             Kv = 0.2
 
-            for i in range(3000):
+            for i in range(2800):
                 # 微分平坦跟踪圆
                 vec_p = self.mav_pos[:2] - target_pos[:2]
                 vec_unit_p = vec_p / np.linalg.norm(vec_p)
